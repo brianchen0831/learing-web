@@ -1,14 +1,17 @@
 import { computed, onMounted, ref } from 'vue';
 import FillBlankTest, { canAsk } from './FillBlankTest.js';
+import HangmanTest, { canAsk as canPlayHangman } from './HangmanTest.js';
 import WordListChecklist from './WordListChecklist.js';
 import { getWordList, getWordLists } from '../api.js';
 import { t } from '../i18n.js';
 import { saveScore } from '../store.js';
 import { buildTree } from '../wordlistTree.js';
 
-// Add new test types here. `canAsk` says whether a word can be used by that type.
+// Add new test types here. `canAsk` says whether a word can be used by that type,
+// and `pictures` marks a type that can show a picture hint.
 const TEST_TYPES = [
-  { id: 'fill-blank', label: 'test.type.fillBlank', component: FillBlankTest, canAsk },
+  { id: 'fill-blank', label: 'test.type.fillBlank', component: FillBlankTest, canAsk, pictures: true },
+  { id: 'hangman', label: 'test.type.hangman', component: HangmanTest, canAsk: canPlayHangman },
 ];
 const QUESTION_COUNTS = [10, 15, 20];
 
@@ -103,7 +106,8 @@ export default {
   template: `
     <section class="lesson vocab-test">
       <p v-if="failed">{{ t('test.loadError') }}</p>
-      <component v-else-if="words" :is="activeType.component" :words="words" :pictures="pictures" @finish="finish" />
+      <component v-else-if="words" :is="activeType.component" :words="words"
+                 v-bind="activeType.pictures ? { pictures } : {}" @finish="finish" />
       <form v-else-if="loaded" novalidate @submit.prevent="start">
         <p v-if="result" class="test-result" role="status">{{ t('test.result') }}: {{ result.score }}/{{ result.answered }}</p>
         <p v-if="!usable.length">{{ t('test.noLists') }}</p>
@@ -142,7 +146,7 @@ export default {
                      :aria-label="t('test.customLabel')" @focus="count = 'custom'">
             </div>
           </fieldset>
-          <label class="check">
+          <label v-if="activeType.pictures" class="check">
             <input v-model="pictures" type="checkbox">
             {{ t('test.pictures') }}
           </label>

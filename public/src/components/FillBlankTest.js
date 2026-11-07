@@ -1,5 +1,6 @@
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import { findPicture } from '../api.js';
+import { computed, nextTick, onMounted, ref } from 'vue';
+import PictureHint from './PictureHint.js';
+import { googleImagesUrl } from '../api.js';
 import { t } from '../i18n.js';
 
 const LETTER = /[\p{L}\p{N}]/u;
@@ -20,6 +21,7 @@ export const canAsk = (word) => maskWord(word).some((c) => c.hidden);
 // Test type "fill in the blank": emits finish with { score, answered }.
 export default {
   name: 'FillBlankTest',
+  components: { PictureHint },
   props: {
     words: { type: Array, required: true },
     pictures: { type: Boolean, default: true },
@@ -32,7 +34,6 @@ export default {
     const correct = ref(false);
     const score = ref(0);
     const answered = ref(0);
-    const picture = ref(null);
     const input = ref(null);
 
     const current = computed(() => props.words[index.value]);
@@ -52,22 +53,9 @@ export default {
       const texts = meanings.map((m) => m.chinese).filter(Boolean);
       return [...new Set(texts.length ? texts : meanings.map((m) => m.meaning).filter(Boolean))].join('；');
     });
-    const googleUrl = computed(
-      () => `https://www.google.com/search?tbm=isch&safe=active&q=${encodeURIComponent(current.value.word)}`,
-    );
+    const googleUrl = computed(() => googleImagesUrl(current.value.word));
 
-    async function loadPicture() {
-      picture.value = null;
-      if (!props.pictures) return;
-      const word = current.value.word;
-      const found = await findPicture(word);
-      if (word === current.value.word) picture.value = found;
-    }
-    watch(current, loadPicture);
-    onMounted(() => {
-      loadPicture();
-      input.value.focus();
-    });
+    onMounted(() => input.value.focus());
 
     function finish() {
       emit('finish', { score: score.value, answered: answered.value });
@@ -90,7 +78,7 @@ export default {
       }
     }
 
-    return { index, typed, checked, correct, score, answered, picture, input, current, missing, shown, chinese, googleUrl, finish, submit, t };
+    return { index, typed, checked, correct, score, answered, input, current, missing, shown, chinese, googleUrl, finish, submit, t };
   },
   template: `
     <form class="fill-blank" @submit.prevent="submit" novalidate>
@@ -117,12 +105,7 @@ export default {
           {{ checked ? t('test.next') : t('test.check') }}
         </button>
       </div>
-      <figure v-if="picture" class="test-picture">
-        <img :src="picture.url" :alt="t('test.picture')" @error="picture = null">
-        <figcaption>
-          <a :href="picture.link" target="_blank" rel="noopener">{{ [picture.creator, picture.license].filter(Boolean).join(' · ') }}</a>
-        </figcaption>
-      </figure>
+      <PictureHint v-if="pictures" :word="current.word" />
     </form>
   `,
 };

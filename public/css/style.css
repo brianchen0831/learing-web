@@ -300,6 +300,17 @@ figcaption { color: var(--muted); font-size: .9rem; margin-top: .3rem; }
 .test-picture img { max-height: 240px; background: var(--fill); }
 .test-picture figcaption { font-size: .8rem; }
 .test-google { display: inline-block; margin-bottom: .4rem; }
+.hangman-figure { display: block; width: 130px; height: 140px; margin: 0 auto; color: var(--text); }
+.hangman-left { text-align: center; color: var(--muted); font-size: .9rem; margin: .2rem 0 .5rem; }
+.letters { display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem; margin: .4rem 0 1rem; }
+.letters button {
+  width: 2.3rem; height: 2.3rem; padding: 0; font: inherit; text-transform: uppercase; cursor: pointer;
+  color: var(--text); background: var(--surface); border: 1px solid var(--border-strong); border-radius: 6px;
+}
+.letters button:hover:enabled { background: var(--fill); }
+.letters button:disabled { cursor: default; opacity: .5; }
+.letters button.hit { opacity: 1; color: var(--ok); background: var(--ok-bg); border-color: var(--ok); }
+.letters button.miss { opacity: 1; color: var(--bad); background: var(--bad-bg); border-color: var(--bad); }
 .test-actions { display: flex; justify-content: space-between; gap: .6rem; margin-top: 1rem; }
 
 /* Resources tree */

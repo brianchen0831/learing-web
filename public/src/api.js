@@ -45,6 +45,9 @@ export async function findPicture(word) {
   }
 }
 
+export const googleImagesUrl = (word) =>
+  `https://www.google.com/search?tbm=isch&safe=active&q=${encodeURIComponent(word)}`;
+
 // Saves a new list and returns its id. Throws an Error with the server's message.
 export async function createWordList(topic, list) {
   const url = `/api/wordlists/${enc(topic)}`;

@@ -13,11 +13,11 @@ Before the test, the student:
 1. Chooses word lists from a checklist with **Select all** and **Clear**. It shows the same folders as Vocabulary, and a folder's checkbox selects everything inside it.
 2. Chooses the test type.
 3. Chooses the number of questions: Full, 10, 15, 20, or a custom whole number.
-4. Chooses whether to show a picture hint.
+4. Chooses whether to show a picture hint, for test types that have one.
 
 The selected words are combined and shuffled, and a word in two lists is only asked once. Full asks every word. A number picks that many at random, or all of them if there are fewer. The test ends after the last word or with **End test**, and the result is shown on the same page. It is also saved as the last score, shown on the Quiz card on the English page.
 
-Main code: `src/components/VocabularyTest.js`.
+Main code: `src/components/VocabularyTest.js`, and `src/components/PictureHint.js` for the picture shared by all test types.
 
 ## Test types 測驗類型
 
@@ -31,10 +31,21 @@ Main code: `src/components/VocabularyTest.js`.
 - Each question gets one try. The word is then shown with a **Search Google Images** link.
 - Words with no hidden letter, such as `at`, are left out.
 
+### Hangman 猜單字
+
+`src/components/HangmanTest.js`
+
+- The whole word is hidden and there are no hints: no Chinese meaning and no picture during the round. Spaces, hyphens and apostrophes stay visible.
+- The word, its meaning and a picture are shown when the round ends. The picture is only requested then, so it cannot give the word away.
+- The student guesses letters with the on-screen buttons or the keyboard. On the keyboard, **Enter** moves to the next word after a round.
+- Six wrong guesses are allowed, and each adds a part to the drawing. Guessing a used letter costs nothing.
+- A round scores a point if the word is finished. Otherwise the word is shown.
+- Words with fewer than two letters A–Z are left out.
+
 ### Adding a type 新增類型
 
-1. Create a component that takes `words` and `pictures` and emits `finish` with `{ score, answered }`.
-2. Add it to `TEST_TYPES` in `src/components/VocabularyTest.js`, with a `canAsk(word)` function.
+1. Create a component that takes `words` and emits `finish` with `{ score, answered }`.
+2. Add it to `TEST_TYPES` in `src/components/VocabularyTest.js`, with a `canAsk(word)` function. To offer the picture hint, add `pictures: true`, and the component also receives a `pictures` prop.
 3. Add its name to `src/i18n.js`.
 
 ## Pictures 圖片
