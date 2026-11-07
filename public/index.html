@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Learning Web</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header><a href="/">📚 Learning Web</a></header>
+  <main>
+    <h1>Choose a topic</h1>
+    <div id="topics" class="grid">Loading…</div>
+  </main>
+  <script>
+    fetch('/api/topics').then(r => r.json()).then(list => {
+      const box = document.getElementById('topics');
+      box.innerHTML = '';
+      list.forEach(t => {
+        const a = document.createElement('a');
+        a.className = 'card';
+        a.href = `/topics/${t.slug}.html`;
+        const score = (() => { try { return localStorage.getItem(`score:/topics/${t.slug}.html`); } catch { return null; } })();
+        a.innerHTML = '<div class="icon"></div><h2></h2><p></p><span class="badge"></span>';
+        a.querySelector('.icon').textContent = t.icon;
+        a.querySelector('h2').textContent = t.title;
+        a.querySelector('p').textContent = t.summary;
+        a.querySelector('.badge').textContent = t.level + (score ? ` · Last score ${score}` : '');
+        box.appendChild(a);
+      });
+    }).catch(() => { document.getElementById('topics').textContent = 'Could not load topics.'; });
+  </script>
+</body>
+</html>

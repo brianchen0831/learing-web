@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>HTML & CSS Basics</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header><a href="/">📚 Learning Web</a></header>
+  <main>
+    <h1>🌐 HTML & CSS Basics</h1>
+    <section class="lesson">
+      <h2>HTML: the structure</h2>
+      <p>HTML uses <strong>tags</strong> to describe the parts of a page: headings, paragraphs, links and images.</p>
+<pre>&lt;h1&gt;My Page&lt;/h1&gt;
+&lt;p&gt;Hello, &lt;a href="https://example.com"&gt;world&lt;/a&gt;!&lt;/p&gt;</pre>
+    </section>
+    <section class="lesson">
+      <h2>CSS: the style</h2>
+      <p>CSS selects elements and changes how they look.</p>
+<pre>p { color: teal; font-size: 20px; }</pre>
+      <div class="demo"><p id="demo" style="color:teal;font-size:20px">I am styled with CSS!</p>
+        <button onclick="document.getElementById('demo').style.color = '#' + Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0')">Change colour</button></div>
+    </section>
+    <section class="lesson quiz-box">
+      <h2>Quiz</h2>
+      <div id="quiz" class="quiz" data-quiz='[
+        {"q":"Which tag makes the biggest heading?","options":["&lt;h6&gt;","&lt;h1&gt;","&lt;head&gt;"],"answer":1},
+        {"q":"What does CSS control?","options":["Appearance","Database","Server speed"],"answer":0},
+        {"q":"Which tag creates a link?","options":["&lt;a&gt;","&lt;p&gt;","&lt;img&gt;"],"answer":0}]'></div>
+    </section>
+  </main>
+  <script src="/js/quiz.js"></script>
+</body>
+</html>

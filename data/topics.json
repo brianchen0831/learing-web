@@ -1,0 +1,7 @@
+[
+  { "slug": "python", "title": "Python Basics", "icon": "🐍", "level": "Beginner", "summary": "Variables, loops and functions in Python." },
+  { "slug": "html-css", "title": "HTML & CSS Basics", "icon": "🌐", "level": "Beginner", "summary": "Build and style your first web page." },
+  { "slug": "javascript", "title": "JavaScript Basics", "icon": "⚡", "level": "Beginner", "summary": "Variables, functions and making pages interactive." },
+  { "slug": "math", "title": "Fractions & Percentages", "icon": "➗", "level": "Beginner", "summary": "Understand parts of a whole." },
+  { "slug": "science", "title": "The Water Cycle", "icon": "💧", "level": "Beginner", "summary": "How water moves around our planet." }
+]
