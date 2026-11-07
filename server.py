@@ -1,9 +1,10 @@
 """Zero-dependency learning web server. Run: python server.py [port]
 
 Routes
-  /                      static files from public/
   /api/topics            data/topics.json
   /api/assets/<topic>    JSON tree of public/topics/<topic>/assets (any depth)
+  other files            static files from public/ (Vue app, content, assets)
+  other paths            public/index.html (the Vue Router app handles them)
 """
 import json
 import os
@@ -76,7 +77,25 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json(asset_tree(assets))
             return
 
-        super().do_GET()
+        # Single-page app: real files are served as-is; extension-less paths such as
+        # /topics/math or /topics/math/ are client-side routes and get index.html.
+        # (Directories are never listed.)
+        fs_path = self.translate_path(self.path)
+        if os.path.isfile(fs_path):
+            super().do_GET()
+        elif "." in path.rstrip("/").rsplit("/", 1)[-1]:
+            self.send_error(404, "File not found")
+        else:
+            self.send_index()
+
+    def send_index(self):
+        with open(os.path.join(PUBLIC, "index.html"), "rb") as f:
+            body = f.read()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def end_headers(self):
         self.send_header("Cache-Control", "no-cache")

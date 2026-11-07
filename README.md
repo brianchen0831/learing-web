@@ -6,7 +6,7 @@
 
 ## English
 
-A small local web server, written in Python, that hosts learning pages and quizzes for students. It uses only the Python standard library (3.8+), so there is nothing to install beyond Python itself.
+A local learning website for students: a Vue 3 single-page app served by a small Python server. The server uses only the Python standard library (3.8+) and Vue is stored in the repo, so there is nothing to install beyond Python itself.
 
 ### Setup (Windows)
 
@@ -27,13 +27,12 @@ Open http://localhost:3000 (the port can also be set with the `PORT` environment
 ### Structure
 
 - `setup.ps1` – installs Git and Python on Windows
-- `server.py` – static file server plus `/api/topics`
+- `server.py` – Python server: static files, `/api/topics`, `/api/assets/<topic>`, and fallback to the Vue app
 - `data/topics.json` – topics shown on the home page (titles in `en` and `zh`)
-- `public/index.html` – home page
-- `public/topics/<topic>/` – one independent folder per topic (`math`, `english`, `chinese`), each with `index.html` and a bilingual `content.json`
-- `public/js/i18n.js` – English / 中文 language switch (remembered in the browser)
-- `public/js/topic.js` – renders a topic's `content.json` in the chosen language
-- `public/js/quiz.js` – quiz engine
+- `public/index.html` – the single HTML page that loads the Vue app
+- `public/src/` – the Vue 3 app: `main.js`, `App.js`, `router.js`, `i18n.js`, `api.js`, `store.js`, `components/`, `views/`
+- `public/vendor/` – local copies of Vue and Vue Router (no Node.js or build step needed)
+- `public/topics/<topic>/` – one independent folder per topic (`math`, `english`, `chinese`), each with a bilingual `content.json` and `assets/`
 - `public/css/style.css` – shared styles (light/dark)
 
 Each topic folder also has an `assets/` folder (images, worksheets, … with any depth of subfolders) that is listed on the topic page. See [WEB_MAP.md](WEB_MAP.md) for the full architecture.
@@ -41,15 +40,15 @@ Each topic folder also has an `assets/` folder (images, worksheets, … with any
 ### Add a topic
 
 1. Copy a folder in `public/topics/` (for example `math`) to `public/topics/<new>/`.
-2. In its `index.html`, set `data-topic="<new>"`.
-3. Edit `content.json`: provide both `en` and `zh` with a title, intro, sections and quiz.
-4. Add an entry (same `slug`, with `en` / `zh` title and summary) to `data/topics.json`.
+2. Edit `content.json`: provide both `en` and `zh` with a title, intro, sections and quiz.
+3. Replace the files in `assets/`, including the banner `assets/images/hero.jpg`.
+4. Add an entry (same `slug`, with `en` / `zh` title and summary, and `image`) to `data/topics.json`.
 
 ---
 
 ## 中文
 
-這是一個用 Python 撰寫的本機小型網頁伺服器，提供多個學習主題頁面與小測驗給學生使用。只使用 Python 標準函式庫（3.8 以上），除了 Python 本身外不需要安裝任何套件。
+這是給學生使用的本機學習網站：以 Vue 3 單頁應用程式為前端，由小型 Python 伺服器提供服務。伺服器只使用 Python 標準函式庫（3.8 以上），Vue 檔案也已放在專案內，除了 Python 本身外不需要安裝任何套件。
 
 ### 安裝環境（Windows）
 
@@ -70,13 +69,12 @@ python server.py        # 或指定連接埠：python server.py 8080
 ### 專案結構
 
 - `setup.ps1` – 在 Windows 上安裝 Git 與 Python
-- `server.py` – 靜態檔案伺服器，並提供 `/api/topics`
+- `server.py` – Python 伺服器：靜態檔案、`/api/topics`、`/api/assets/<主題>`，其他路徑交給 Vue 應用程式
 - `data/topics.json` – 首頁顯示的主題清單（含 `en`、`zh` 標題）
-- `public/index.html` – 首頁
-- `public/topics/<主題>/` – 每個主題一個獨立資料夾（`math`、`english`、`chinese`），各有 `index.html` 與雙語的 `content.json`
-- `public/js/i18n.js` – English / 中文 語言切換（瀏覽器會記住你的選擇）
-- `public/js/topic.js` – 依所選語言顯示主題的 `content.json`
-- `public/js/quiz.js` – 測驗程式
+- `public/index.html` – 載入 Vue 應用程式的唯一 HTML 頁面
+- `public/src/` – Vue 3 應用程式：`main.js`、`App.js`、`router.js`、`i18n.js`、`api.js`、`store.js`、`components/`、`views/`
+- `public/vendor/` – 本機的 Vue 與 Vue Router 檔案（不需要 Node.js，也不需要建置步驟）
+- `public/topics/<主題>/` – 每個主題一個獨立資料夾（`math`、`english`、`chinese`），各有雙語的 `content.json` 與 `assets/`
 - `public/css/style.css` – 共用樣式（支援淺色／深色模式）
 
 每個主題資料夾另有 `assets/` 資料夾（圖片、練習題等，可建立任意層級的子資料夾），內容會列在主題頁上。完整架構請見 [WEB_MAP.md](WEB_MAP.md)。
@@ -84,9 +82,9 @@ python server.py        # 或指定連接埠：python server.py 8080
 ### 新增主題
 
 1. 複製 `public/topics/` 中的任一資料夾（例如 `math`）為 `public/topics/<新主題>/`。
-2. 在其 `index.html` 中把 `data-topic="<新主題>"` 改好。
-3. 編輯 `content.json`：同時提供 `en` 與 `zh` 的標題、簡介、段落與測驗題。
-4. 在 `data/topics.json` 加入對應項目（相同的 `slug`，並提供 `en` / `zh` 標題與簡介）。
+2. 編輯 `content.json`：同時提供 `en` 與 `zh` 的標題、簡介、段落與測驗題。
+3. 替換 `assets/` 中的檔案，包含橫幅圖片 `assets/images/hero.jpg`。
+4. 在 `data/topics.json` 加入對應項目（相同的 `slug`，並提供 `en` / `zh` 標題、簡介與 `image`）。
 
 ---
 

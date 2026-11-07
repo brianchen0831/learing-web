@@ -3,51 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title data-i18n="site.title">Learning Web</title>
+  <title>Learning Web</title>
   <link rel="stylesheet" href="/css/style.css">
+  <script type="importmap">
+    { "imports": { "vue": "/vendor/vue.esm-browser.prod.js", "vue-router": "/vendor/vue-router.esm-browser.prod.js" } }
+  </script>
 </head>
 <body>
-  <header><a href="/">📚 <span data-i18n="site.title">Learning Web</span></a></header>
-  <main>
-    <h1 data-i18n="home.heading">Choose a topic</h1>
-    <p class="intro" data-i18n="home.sub"></p>
-    <div id="topics" class="grid"></div>
-  </main>
-  <script src="/js/i18n.js"></script>
-  <script>
-    let topics = null;
-    const box = document.getElementById('topics');
-
-    function render() {
-      if (!topics) return;
-      box.innerHTML = '';
-      topics.forEach((t) => {
-        const a = document.createElement('a');
-        a.className = 'card';
-        a.href = `/topics/${t.slug}/`;
-        const icon = document.createElement('div');
-        icon.className = 'icon';
-        icon.textContent = t.icon;
-        const h = document.createElement('h2');
-        h.textContent = I18N.pick(t.title);
-        const p = document.createElement('p');
-        p.textContent = I18N.pick(t.summary);
-        a.append(icon, h, p);
-        let score = null;
-        try { score = localStorage.getItem('score:' + t.slug); } catch {}
-        if (score) {
-          const badge = document.createElement('span');
-          badge.className = 'badge';
-          badge.textContent = `${I18N.t('home.lastScore')}: ${score}`;
-          a.appendChild(badge);
-        }
-        box.appendChild(a);
-      });
-    }
-
-    fetch('/api/topics').then((r) => r.json()).then((list) => { topics = list; render(); })
-      .catch(() => { box.textContent = I18N.t('home.loadError'); });
-    window.addEventListener('langchange', render);
-  </script>
+  <div id="app"></div>
+  <noscript>This site needs JavaScript. 本網站需要啟用 JavaScript。</noscript>
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>

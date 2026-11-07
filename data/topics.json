@@ -2,19 +2,22 @@
   {
     "slug": "math",
     "icon": "➗",
+    "image": "/topics/math/assets/images/hero.jpg",
     "title": { "en": "Math", "zh": "數學" },
-    "summary": { "en": "Fractions, percentages and number sense.", "zh": "分數、百分比與數感。" }
+    "summary": { "en": "To be done", "zh": "待完成" }
   },
   {
     "slug": "english",
     "icon": "🔤",
+    "image": "/topics/english/assets/images/hero.jpg",
     "title": { "en": "English", "zh": "英文" },
-    "summary": { "en": "Parts of speech, articles and simple sentences.", "zh": "詞類、冠詞與簡單句型。" }
+    "summary": { "en": "To be done", "zh": "待完成" }
   },
   {
     "slug": "chinese",
     "icon": "🀄",
+    "image": "/topics/chinese/assets/images/hero.jpg",
     "title": { "en": "Chinese", "zh": "中文" },
-    "summary": { "en": "Greetings, numbers and characters with pinyin.", "zh": "問候語、數字與漢字（附拼音）。" }
+    "summary": { "en": "To be done", "zh": "待完成" }
   }
 ]
