@@ -14,10 +14,30 @@ function getJSON(url, { allow404 = false } = {}) {
   return cache.get(url);
 }
 
+// Encode each path segment, keeping the slashes.
+const enc = (path) => path.split('/').map(encodeURIComponent).join('/');
+
+// `topic` is a topic or subtopic path: "math" or "english/vocabulary".
 export const getTopics = () => getJSON('/api/topics');
-export const getContent = (slug) => getJSON(`/topics/${encodeURIComponent(slug)}/content.json`);
-export const getAssets = (slug) => getJSON(`/api/assets/${encodeURIComponent(slug)}`, { allow404: true });
+export const getContent = (topic) => getJSON(`/topics/${enc(topic)}/content.json`);
+export const getAssets = (topic) => getJSON(`/api/assets/${enc(topic)}`, { allow404: true });
+
+export const getWordLists = (topic) => getJSON(`/api/wordlists/${enc(topic)}`);
+export const getWordList = (topic, id) => getJSON(`/api/wordlists/${enc(topic)}/${enc(id)}`);
+
+// Saves a new list and returns its id. Throws an Error with the server's message.
+export async function createWordList(topic, list) {
+  const url = `/api/wordlists/${enc(topic)}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(list),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || String(res.status));
+  cache.delete(url); // the list of lists has changed
+  return body.id;
+}
 
 // URL of a file inside a topic's assets folder; `path` may include subfolders.
-export const assetUrl = (slug, path) =>
-  `/topics/${encodeURIComponent(slug)}/assets/` + path.split('/').map(encodeURIComponent).join('/');
+export const assetUrl = (topic, path) => `/topics/${enc(topic)}/assets/${enc(path)}`;

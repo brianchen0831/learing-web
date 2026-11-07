@@ -9,8 +9,8 @@ export default {
   },
   template: `
     <RouterLink class="card" :to="'/topics/' + topic.slug">
-      <div class="thumb">
-        <img v-if="topic.image" :src="topic.image" alt="" loading="lazy">
+      <div v-if="topic.image" class="thumb">
+        <img :src="topic.image" alt="" loading="lazy">
       </div>
       <div class="body">
         <h2>{{ pick(topic.title) }}</h2>

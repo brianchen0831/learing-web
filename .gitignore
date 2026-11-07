@@ -9,3 +9,5 @@ artifacts/
 *.code-workspace
 .editorconfig
 tmp/
+/database/
+/config.json

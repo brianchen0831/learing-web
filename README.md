@@ -24,6 +24,20 @@ python server.py        # or: python server.py 8080
 
 Open http://localhost:3000 (the port can also be set with the `PORT` environment variable).
 
+### Configuration
+
+Your settings are in `config.json`, which is not committed. Copy `config.example.json` to create it; without the file, the defaults are used.
+
+```json
+{
+  "database_path": "database"
+}
+```
+
+`database_path` sets where the database folder is. The default is `database/` in the project folder, which git ignores. A relative path starts at the project folder, and an absolute path can point anywhere, for example `"D:/learning-data"`. On Windows, use `/` or `\\` in the path. Restart the server after changing it.
+
+At startup, the server creates one folder per topic and subtopic, such as `database/english/vocabulary` and `database/english/quiz`.
+
 ### Structure
 
 - `setup.ps1` – installs Git and Python on Windows
@@ -65,6 +79,20 @@ python server.py        # 或指定連接埠：python server.py 8080
 ```
 
 開啟瀏覽器前往 http://localhost:3000（也可以用環境變數 `PORT` 設定連接埠）。
+
+### 設定
+
+個人設定放在 `config.json`，這個檔案不會被提交到 git。可複製 `config.example.json` 來建立；沒有此檔案時會使用預設值。
+
+```json
+{
+  "database_path": "database"
+}
+```
+
+`database_path` 用來指定資料庫資料夾的位置。預設是專案資料夾內的 `database/`，git 會忽略它。相對路徑從專案資料夾開始，也可以用絕對路徑指向其他位置，例如 `"D:/learning-data"`。在 Windows 上，路徑請使用 `/` 或 `\\`。修改後請重新啟動伺服器。
+
+伺服器啟動時會為每個主題和子主題建立資料夾，例如 `database/english/vocabulary` 和 `database/english/quiz`。
 
 ### 專案結構
 

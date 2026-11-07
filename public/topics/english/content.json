@@ -1,4 +1,16 @@
 {
+  "subtopics": [
+    {
+      "slug": "vocabulary",
+      "title": { "en": "Vocabulary", "zh": "單字" },
+      "summary": { "en": "Word lists with meanings and examples", "zh": "單字表：解釋與例句" }
+    },
+    {
+      "slug": "quiz",
+      "title": { "en": "Quiz", "zh": "測驗" },
+      "summary": { "en": "To be done", "zh": "待完成" }
+    }
+  ],
   "en": { "title": "English", "sections": [], "quiz": [] },
   "zh": { "title": "英文", "sections": [], "quiz": [] }
 }

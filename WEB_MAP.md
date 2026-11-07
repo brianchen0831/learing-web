@@ -23,6 +23,9 @@ Vue 與 Vue Router 的檔案放在 `public/vendor/`，離線也能使用。Compo
 learning-web/
 ├── server.py                    Python web server (static files + API + SPA fallback)
 ├── setup.ps1                    Windows installer for Git + Python
+├── config.example.json          sample settings (committed)
+├── config.json                  your settings (not committed)
+├── database/                    default database folder (not committed)
 ├── WEB_MAP.md                   this file 本文件
 ├── README.md                    quick start 快速開始
 ├── data/
@@ -47,10 +50,13 @@ learning-web/
     │   │   ├── TopicCard.js     card on the home page
     │   │   ├── TopicSection.js  one lesson section (text, image, list, code)
     │   │   ├── AssetTree.js     recursive folder tree of a topic's assets
+    │   │   ├── WordList.js      word list sidebar and table
+    │   │   ├── WordDialog.js    pop-up for adding or editing a word
     │   │   └── QuizBlock.js     quiz with per-answer feedback
     │   └── views/
     │       ├── HomeView.js      route /
-    │       ├── TopicView.js     route /topics/:slug
+    │       ├── TopicView.js     routes /topics/:slug and /topics/:slug/:sub
+    │       ├── WordListEditorView.js  route /topics/:slug/:sub/new
     │       └── NotFoundView.js  any other route
     └── topics/
         └── <topic>/             one independent folder per topic 每個主題一個獨立資料夾
@@ -73,7 +79,9 @@ App
 │   │             └─ TopicCard (×N)
 │   ├── TopicView ─┬─ TopicSection (×N)
 │   │              ├─ AssetTree (recursive)
-│   │              └─ QuizBlock
+│   │              ├─ QuizBlock
+│   │              └─ WordList
+│   ├── WordListEditorView ── WordDialog
 │   └── NotFoundView
 └── footer
 ```
@@ -86,6 +94,8 @@ Shared state 共用狀態: `i18n.js` (`lang`), `store.js` (`scores`). Both are V
 | --- | ---- | ----------- |
 | `/` | `HomeView` | `GET /api/topics` |
 | `/topics/<slug>` | `TopicView` | `GET /topics/<slug>/content.json`, `GET /api/assets/<slug>` |
+| `/topics/<slug>/<sub>` | `TopicView` | the same requests for `<slug>/<sub>`, plus the parent's `content.json` |
+| `/topics/<slug>/<sub>/new` | `WordListEditorView` | saves with `POST /api/wordlists/<slug>/<sub>` |
 | anything else | `NotFoundView` | – |
 
 ## 5. Request flow 請求流程
@@ -183,13 +193,108 @@ All three topics are currently placeholders: `content.json` has empty `sections`
 2. Add `{ "slug": "<new>", "icon": "…", "image": "/topics/<new>/assets/images/hero.jpg", "title": {"en","zh"}, "summary": {"en","zh"} }` to `data/topics.json`.
 3. Refresh the browser. No code changes and no restart are needed.
 
+### Subtopics 子主題
+
+A topic can contain subtopics, one level deep. `english` has `vocabulary` and `quiz`:
+
+```
+public/topics/english/
+├── content.json          lists "subtopics" at the top level
+├── assets/images/hero.jpg
+├── vocabulary/
+│   └── content.json      same format as a topic; assets/ is optional
+└── quiz/
+    └── content.json
+```
+
+To add one 新增子主題:
+
+1. Create `public/topics/<topic>/<sub>/content.json` with `en` and `zh`.
+2. Add `{ "slug": "<sub>", "title": {"en","zh"}, "summary": {"en","zh"} }` to `subtopics` in the parent's `content.json`.
+
+The parent page shows subtopics as cards. A subtopic page uses its parent's banner photo and links back to the parent. Use lowercase letters, numbers and `-` in the folder name.
+
 ## 11. Add a component or page 新增元件或頁面
 
 - **Component:** create `src/components/MyThing.js` exporting `{ name, props, setup, template }`, import it where it is used and list it in `components`.
 - **Page:** create `src/views/MyView.js`, add a route in `src/router.js`.
 - **Interface text:** add the key to both `en` and `zh` in `src/i18n.js`.
 
-## 12. Design rules 設計原則
+## 12. Config and database 設定與資料庫
+
+`server.py` reads `config.json` at startup. A setting left out of the file, or a missing file, uses the default. Invalid JSON or an unusable path stops the server with an error, so data is never written to an unexpected place.
+
+| Setting | Default | Meaning |
+| ------- | ------- | ------- |
+| `database_path` | `database` | Database folder. A relative path starts at the project folder; an absolute path can be anywhere. |
+
+The database mirrors the topics, and the server creates any missing folders at startup from `data/topics.json` and each topic's `subtopics`. Existing files are never changed.
+資料庫的結構與主題相同，伺服器啟動時會自動建立缺少的資料夾，不會更動既有檔案。
+
+```
+database/
+├── math/
+├── english/
+│   ├── vocabulary/
+│   └── quiz/
+└── chinese/
+```
+
+The browser cannot reach the database folder directly. It only goes through the word list API, which can read lists and create new ones.
+瀏覽器無法直接存取資料庫資料夾，只能透過單字表 API 讀取或新增單字表。
+
+The default `database/` folder is not in git, so a fresh clone starts with no word lists.
+預設的 `database/` 不在 git 中，因此重新 clone 專案後不會有單字表。
+
+### Word lists 單字表
+
+Each word list is one JSON file in a database folder, for example `database/english/vocabulary/animals.json`. The file name, without `.json`, is the list's id; it may use letters, numbers, `-` and `_`.
+每個單字表是一個 JSON 檔案，檔名（不含 `.json`）就是單字表的 id。
+
+```json
+{
+  "title": { "en": "Animals", "zh": "動物" },
+  "words": [
+    {
+      "word": "fish",
+      "meanings": [
+        { "meaning": "an animal that lives in water", "chinese": "魚", "example": "We saw many fish in the sea." },
+        { "meaning": "to try to catch fish", "chinese": "釣魚", "example": "We fish in the lake every summer." }
+      ]
+    }
+  ]
+}
+```
+
+| Field | Required | Meaning |
+| ----- | -------- | ------- |
+| `title` | no | List name in `en` and `zh`; the file name is shown if it is missing |
+| `words` | yes | The words, in display order |
+| `word` | yes | The English word; also builds the dictionary link |
+| `meanings` | yes | One entry per meaning of the word |
+| `meaning` | no | Meaning in English |
+| `chinese` | no | Meaning in Chinese |
+| `example` | no | Example sentence |
+
+- To create a list in the site, use **+ New list** in the sidebar. This opens `/topics/<topic>/<sub>/new`: enter the list name, then add words with **+**. Each word opens a pop-up, where **+** adds another meaning.
+- You can also add a list by saving a `.json` file in the folder and refreshing the browser. No restart is needed.
+- New lists are named after the list name, for example `my-words.json`, or `list.json` when the name has no English letters or numbers. A number is added if the name is taken, so existing files are never replaced.
+- A list created on the site stores its name in both `en` and `zh`.
+- Lists cannot be edited or deleted on the site yet. Edit or delete the file in the database folder instead.
+- A file that breaks these rules still appears in the sidebar, marked as having errors, but cannot be selected.
+- Each word links to `https://dictionary.cambridge.org/dictionary/english/<word>`. Spaces in a phrase become `-`.
+- The selected list is kept in the URL, for example `/topics/english/vocabulary?list=animals`.
+- A subtopic shows word lists when its `content.json` has `"view": "wordlist"` at the top level.
+
+| Endpoint | Returns |
+| -------- | ------- |
+| `GET /api/wordlists/<topic>/<sub>` | `[{ "id", "title", "count" }]`, or `{ "id", "invalid": true }` for a broken file. Empty if there are none. |
+| `GET /api/wordlists/<topic>/<sub>/<id>` | The whole list; `404` if it is missing or broken |
+| `POST /api/wordlists/<topic>/<sub>` | Creates a list from `{ "title": "name", "words": [...] }` and returns `201` with `{ "id" }`, or an `{ "error" }` message |
+
+Saving only accepts `application/json` requests up to 1 MB from this site's own pages (`Host` must be `localhost` or `127.0.0.1`, and `Origin` must match), so other websites open in the browser cannot write to the database. `<topic>/<sub>` must be a real subtopic.
+
+## 13. Design rules 設計原則
 
 - **No build step**: Vue runs straight from `public/`; the Vue files are vendored, not fetched from a CDN.
 - **Topics are independent**: a topic's content and assets live only in its own folder; shared code lives in `src/` and `css/`.

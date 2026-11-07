@@ -11,7 +11,7 @@
     "icon": "🔤",
     "image": "/topics/english/assets/images/hero.jpg",
     "title": { "en": "English", "zh": "英文" },
-    "summary": { "en": "To be done", "zh": "待完成" }
+    "summary": { "en": "Vocabulary and quiz", "zh": "單字與測驗" }
   },
   {
     "slug": "chinese",

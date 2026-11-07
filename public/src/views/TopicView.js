@@ -1,56 +1,85 @@
 import { computed, ref, watch, watchEffect } from 'vue';
+import TopicCard from '../components/TopicCard.js';
 import TopicSection from '../components/TopicSection.js';
 import AssetTree from '../components/AssetTree.js';
 import QuizBlock from '../components/QuizBlock.js';
+import WordList from '../components/WordList.js';
 import { assetUrl, getAssets, getContent } from '../api.js';
 import { lang, t } from '../i18n.js';
 
+// Shows a topic (/topics/english) or a subtopic (/topics/english/vocabulary).
 export default {
   name: 'TopicView',
-  components: { TopicSection, AssetTree, QuizBlock },
-  props: { slug: { type: String, required: true } },
+  components: { TopicCard, TopicSection, AssetTree, QuizBlock, WordList },
+  props: {
+    slug: { type: String, required: true },
+    sub: { type: String, default: '' },
+  },
   setup(props) {
     const data = ref(null);
+    const parent = ref(null);
     const tree = ref([]);
     const status = ref('loading'); // loading | ready | error
 
+    const path = computed(() => (props.sub ? `${props.slug}/${props.sub}` : props.slug));
+
     watch(
-      () => props.slug,
-      async (slug) => {
+      path,
+      async (current) => {
         status.value = 'loading';
         try {
-          const [content, assets] = await Promise.all([getContent(slug), getAssets(slug)]);
+          const [content, assets, parentContent] = await Promise.all([
+            getContent(current),
+            getAssets(current),
+            props.sub ? getContent(props.slug) : null,
+          ]);
+          if (current !== path.value) return; // the user already moved on
           data.value = content;
           tree.value = assets;
+          parent.value = parentContent;
           status.value = 'ready';
         } catch {
-          status.value = 'error';
+          if (current === path.value) status.value = 'error';
         }
       },
       { immediate: true },
     );
 
     // Content for the current language (falls back to English).
-    const c = computed(() => (data.value ? data.value[lang.value] || data.value.en : null));
+    const inLang = (d) => (d ? d[lang.value] || d.en : null);
+    const c = computed(() => inLang(data.value));
 
     watchEffect(() => {
       document.title = c.value ? `${c.value.title} – ${t('site.title')}` : t('site.title');
     });
 
+    // Subtopics use the banner photo of their parent topic.
     const heroStyle = computed(() => ({ backgroundImage: `url("${assetUrl(props.slug, 'images/hero.jpg')}")` }));
     const sections = computed(() => (c.value && c.value.sections) || []);
     const hasQuiz = computed(() => !!(c.value && c.value.quiz && c.value.quiz.length));
+    const hasLesson = computed(() => sections.value.length > 0 || hasQuiz.value);
+    const subtopics = computed(() =>
+      ((data.value && data.value.subtopics) || []).map((s) => ({ ...s, slug: `${path.value}/${s.slug}` })),
+    );
+
+    const isWordList = computed(() => !!data.value && data.value.view === 'wordlist');
+
+    const backTo = computed(() => (props.sub ? `/topics/${props.slug}` : '/'));
+    const backLabel = computed(() => {
+      const p = inLang(parent.value);
+      return props.sub && p ? `← ${p.title}` : t('nav.home');
+    });
 
     function scrollTo(id) {
       const el = document.getElementById(id);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    return { status, c, tree, sections, hasQuiz, heroStyle, scrollTo, t };
+    return { path, status, c, tree, sections, hasQuiz, hasLesson, subtopics, isWordList, heroStyle, backTo, backLabel, scrollTo, t };
   },
   template: `
     <main>
-      <RouterLink class="back" to="/">{{ t('nav.home') }}</RouterLink>
+      <RouterLink class="back" :to="backTo">{{ backLabel }}</RouterLink>
       <p v-if="status === 'loading'">{{ t('topic.loading') }}</p>
       <p v-else-if="status === 'error'">{{ t('topic.loadError') }}</p>
       <template v-else>
@@ -61,8 +90,14 @@ export default {
             <p v-if="c.intro">{{ c.intro }}</p>
           </div>
         </div>
-        <section v-if="!sections.length && !hasQuiz" class="lesson todo">{{ t('topic.todo') }}</section>
-        <div v-else class="layout">
+        <div v-if="subtopics.length" class="grid subtopics">
+          <TopicCard v-for="s in subtopics" :key="s.slug" :topic="s" />
+        </div>
+        <div v-if="isWordList" class="wordlist">
+          <WordList :key="path" :topic="path" />
+        </div>
+        <section v-else-if="!hasLesson && !subtopics.length" class="lesson todo">{{ t('topic.todo') }}</section>
+        <div v-if="hasLesson" class="layout">
           <nav class="toc">
             <strong>{{ t('toc.heading') }}</strong>
             <ol>
@@ -75,15 +110,15 @@ export default {
           </nav>
           <div class="content">
             <div v-for="(s, i) in sections" :id="'s' + i" :key="i" class="anchor">
-              <TopicSection :slug="slug" :section="s" />
+              <TopicSection :slug="path" :section="s" />
             </div>
             <section v-if="tree.length" id="resources" class="lesson">
               <h2>{{ t('resources.heading') }}</h2>
-              <AssetTree :slug="slug" :entries="tree" />
+              <AssetTree :slug="path" :entries="tree" />
             </section>
             <section v-if="hasQuiz" id="quiz" class="lesson">
               <h2>{{ t('quiz.heading') }}</h2>
-              <QuizBlock :slug="slug" :questions="c.quiz" />
+              <QuizBlock :key="path" :slug="path" :questions="c.quiz" />
             </section>
           </div>
         </div>
