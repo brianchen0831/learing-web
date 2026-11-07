@@ -49,7 +49,7 @@ At startup, the server creates one folder per topic and subtopic, such as `datab
 - `public/topics/<topic>/` – one independent folder per topic (`math`, `english`, `chinese`), each with a bilingual `content.json` and `assets/`
 - `public/css/style.css` – shared styles (light/dark)
 
-Each topic folder also has an `assets/` folder (images, worksheets, … with any depth of subfolders) that is listed on the topic page. See [WEB_MAP.md](WEB_MAP.md) for the full architecture.
+Each topic folder also has an `assets/` folder (images, worksheets, … with any depth of subfolders) that is listed on the topic page. See [WEB_MAP.md](WEB_MAP.md) for an overview, and the `DESIGN.md` in each topic folder for its details.
 
 ### Add a topic
 
@@ -105,7 +105,7 @@ python server.py        # 或指定連接埠：python server.py 8080
 - `public/topics/<主題>/` – 每個主題一個獨立資料夾（`math`、`english`、`chinese`），各有雙語的 `content.json` 與 `assets/`
 - `public/css/style.css` – 共用樣式（支援淺色／深色模式）
 
-每個主題資料夾另有 `assets/` 資料夾（圖片、練習題等，可建立任意層級的子資料夾），內容會列在主題頁上。完整架構請見 [WEB_MAP.md](WEB_MAP.md)。
+每個主題資料夾另有 `assets/` 資料夾（圖片、練習題等，可建立任意層級的子資料夾），內容會列在主題頁上。架構總覽請見 [WEB_MAP.md](WEB_MAP.md)，各主題的細節請見該主題資料夾內的 `DESIGN.md`。
 
 ### 新增主題
 

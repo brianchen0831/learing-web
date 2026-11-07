@@ -186,7 +186,23 @@ figcaption { color: var(--muted); font-size: .9rem; margin-top: .3rem; }
 /* Word lists */
 .wordlist { margin-top: 1.5rem; }
 .wordlist-layout { display: grid; gap: 1.2rem; }
-@media (min-width: 900px) { .wordlist-layout { grid-template-columns: 220px minmax(0, 1fr); align-items: start; } }
+.wordlist-nav-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+.fold {
+  display: grid; place-items: center; flex: none; width: 1.8rem; height: 1.8rem; padding: 0;
+  background: none; border: 1px solid transparent; border-radius: 6px; color: var(--muted); cursor: pointer;
+}
+.fold:hover, .fold:focus-visible { background: var(--fill); border-color: var(--border); color: var(--text); }
+.fold svg { transform: rotate(90deg); }
+.folded .fold svg { transform: rotate(-90deg); }
+@media (min-width: 900px) {
+  .wordlist-layout { grid-template-columns: 220px minmax(0, 1fr); align-items: start; }
+  .wordlist-layout.folded { grid-template-columns: auto minmax(0, 1fr); }
+  .wordlist-nav { max-height: calc(100vh - 5.2rem); overflow-y: auto; }
+  .folded .wordlist-nav { padding: .4rem; }
+  .folded .wordlist-nav strong { display: none; }
+  .fold svg { transform: none; }
+  .folded .fold svg { transform: rotate(180deg); }
+}
 .wordlist-nav ul { list-style: none; margin: .4rem 0 .9rem; padding: 0; }
 .wordlist-nav li { margin: .15rem 0; }
 .wordlist-nav li a { display: block; padding: .2rem .5rem; margin: 0 -.5rem; border-radius: 6px; }
@@ -237,6 +253,12 @@ figcaption { color: var(--muted); font-size: .9rem; margin-top: .3rem; }
 .word-table th { color: var(--muted); font-weight: 600; font-size: .9rem; white-space: nowrap; border-bottom: 1px solid var(--border); }
 .word-table tbody + tbody { border-top: 1px solid var(--border); }
 .word-table a { font-weight: 600; }
+.word-cell { display: flex; align-items: center; gap: .4rem; }
+.speak {
+  display: grid; place-items: center; flex: none; width: 1.8rem; height: 1.8rem; padding: 0;
+  background: none; border: 1px solid transparent; border-radius: 6px; color: var(--muted); cursor: pointer;
+}
+.speak:hover, .speak:focus-visible { background: var(--fill); border-color: var(--border); color: var(--text); }
 @media (max-width: 640px) {
   .word-table thead { display: none; }
   .word-table, .word-table tbody, .word-table tr, .word-table td { display: block; width: 100%; }
