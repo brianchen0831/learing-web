@@ -1,0 +1,68 @@
+{
+  "en": {
+    "icon": "🔤",
+    "title": "English",
+    "intro": "Learn the building blocks of English sentences.",
+    "sections": [
+      {
+        "heading": "Parts of speech",
+        "text": ["Every word has a job in a sentence."],
+        "list": [
+          "Noun – a person, place or thing: teacher, school, book",
+          "Verb – an action: run, read, eat",
+          "Adjective – describes a noun: big, red, happy"
+        ]
+      },
+      {
+        "heading": "Articles: a, an, the",
+        "text": ["Use 'a' before a consonant sound and 'an' before a vowel sound. Use 'the' for something specific."],
+        "image": { "src": "images/articles.svg", "alt": "a dog, an apple, the sun", "caption": "a, an and the" },
+        "code": "a book      an apple\na dog       an egg\nthe sun     the book on the table"
+      },
+      {
+        "heading": "Simple present tense",
+        "text": ["Use the simple present for habits and facts. With he, she or it, add -s to the verb."],
+        "code": "I play football.\nShe plays football.\nThey read books every day."
+      }
+    ],
+    "quiz": [
+      { "q": "Which word is a verb?", "options": ["happy", "run", "table"], "answer": 1 },
+      { "q": "Choose the correct article: ___ apple", "options": ["a", "an", "the apple is not allowed"], "answer": 1 },
+      { "q": "Choose the correct sentence.", "options": ["She play tennis.", "She plays tennis.", "She playing tennis."], "answer": 1 },
+      { "q": "Which word is an adjective?", "options": ["quickly", "school", "tall"], "answer": 2 }
+    ]
+  },
+  "zh": {
+    "icon": "🔤",
+    "title": "英文",
+    "intro": "認識組成英文句子的基本元素。",
+    "sections": [
+      {
+        "heading": "詞類",
+        "text": ["每個單字在句子裡都有自己的功能。"],
+        "list": [
+          "名詞 (noun)：人、地方或東西，例如 teacher（老師）、school（學校）、book（書）",
+          "動詞 (verb)：動作，例如 run（跑）、read（讀）、eat（吃）",
+          "形容詞 (adjective)：描述名詞，例如 big（大的）、red（紅色的）、happy（快樂的）"
+        ]
+      },
+      {
+        "heading": "冠詞：a、an、the",
+        "text": ["子音發音開頭的字前面用 a，母音發音開頭的字前面用 an。the 用來指特定的人事物。"],
+        "image": { "src": "images/articles.svg", "alt": "a dog、an apple、the sun", "caption": "a、an 與 the" },
+        "code": "a book      an apple\na dog       an egg\nthe sun     the book on the table"
+      },
+      {
+        "heading": "現在簡單式",
+        "text": ["現在簡單式用來描述習慣和事實。主詞是 he、she、it 時，動詞要加 -s。"],
+        "code": "I play football.\nShe plays football.\nThey read books every day."
+      }
+    ],
+    "quiz": [
+      { "q": "哪一個字是動詞？", "options": ["happy", "run", "table"], "answer": 1 },
+      { "q": "選出正確的冠詞：___ apple", "options": ["a", "an", "兩個都可以"], "answer": 1 },
+      { "q": "選出正確的句子。", "options": ["She play tennis.", "She plays tennis.", "She playing tennis."], "answer": 1 },
+      { "q": "哪一個字是形容詞？", "options": ["quickly", "school", "tall"], "answer": 2 }
+    ]
+  }
+}

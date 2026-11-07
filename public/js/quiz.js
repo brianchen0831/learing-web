@@ -1,8 +1,7 @@
-// Quiz engine: <div id="quiz" data-quiz='[{"q":"...","options":["a","b"],"answer":0}]'></div>
-(function () {
-  const el = document.getElementById('quiz');
-  if (!el) return;
-  const questions = JSON.parse(el.dataset.quiz);
+// renderQuiz(container, questions, storageKey)
+// questions: [{ q: "text", options: ["a", "b"], answer: 0 }]
+window.renderQuiz = function (el, questions, storageKey) {
+  const t = (k) => I18N.t(k);
   el.innerHTML = '';
   questions.forEach((item, i) => {
     const box = document.createElement('div');
@@ -13,14 +12,17 @@
     item.options.forEach((opt, j) => {
       const label = document.createElement('label');
       const input = document.createElement('input');
-      input.type = 'radio'; input.name = 'q' + i; input.value = j;
+      input.type = 'radio';
+      input.name = 'q' + i;
+      input.value = j;
       label.append(input, ' ' + opt);
       box.appendChild(label);
     });
     el.appendChild(box);
   });
   const btn = document.createElement('button');
-  btn.textContent = 'Check answers';
+  btn.type = 'button';
+  btn.textContent = t('quiz.check');
   const result = document.createElement('p');
   result.setAttribute('aria-live', 'polite');
   btn.onclick = () => {
@@ -31,8 +33,8 @@
     });
     const ok = score === questions.length;
     result.className = ok ? 'right' : 'wrong';
-    result.textContent = `Score: ${score}/${questions.length}` + (ok ? ' 🎉 Perfect!' : ' – try again!');
-    try { localStorage.setItem('score:' + location.pathname, `${score}/${questions.length}`); } catch {}
+    result.textContent = `${t('quiz.score')}: ${score}/${questions.length} ` + (ok ? t('quiz.perfect') : t('quiz.retry'));
+    try { localStorage.setItem('score:' + storageKey, `${score}/${questions.length}`); } catch {}
   };
   el.append(btn, result);
-})();
+};
