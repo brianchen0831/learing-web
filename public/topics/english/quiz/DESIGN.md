@@ -1,5 +1,46 @@
 # Quiz 測驗
 
-To be done. 待完成。
+Vocabulary tests built from the word lists in [Vocabulary](../vocabulary/DESIGN.md).
 
-The page currently shows the "To be done / 待完成" placeholder. The content format is in [../DESIGN.md](../DESIGN.md), and data can go in `database/english/quiz/`.
+以[單字](../vocabulary/DESIGN.md)的單字表為題庫的單字測驗。
+
+## Page 頁面
+
+`content.json` has `"view": "vocabulary-test"`, and `"source"` names the subtopic that holds the word lists.
+
+Before the test, the student:
+
+1. Chooses word lists from a checklist with **Select all** and **Clear**. It shows the same folders as Vocabulary, and a folder's checkbox selects everything inside it.
+2. Chooses the test type.
+3. Chooses the number of questions: Full, 10, 15, 20, or a custom whole number.
+4. Chooses whether to show a picture hint.
+
+The selected words are combined and shuffled, and a word in two lists is only asked once. Full asks every word. A number picks that many at random, or all of them if there are fewer. The test ends after the last word or with **End test**, and the result is shown on the same page. It is also saved as the last score, shown on the Quiz card on the English page.
+
+Main code: `src/components/VocabularyTest.js`.
+
+## Test types 測驗類型
+
+### Fill in the blank 填空
+
+`src/components/FillBlankTest.js`
+
+- Shows a random word with every letter hidden except the first and last, for example `a _ _ _ _ _ t`. Spaces, hyphens and apostrophes stay visible.
+- Below it are all the word's Chinese meanings. If it has none, its English meanings are shown instead.
+- The student types only the missing letters, which fill the blanks as they type. Capital letters do not matter.
+- Each question gets one try. The word is then shown with a **Search Google Images** link.
+- Words with no hidden letter, such as `at`, are left out.
+
+### Adding a type 新增類型
+
+1. Create a component that takes `words` and `pictures` and emits `finish` with `{ score, answered }`.
+2. Add it to `TEST_TYPES` in `src/components/VocabularyTest.js`, with a `canAsk(word)` function.
+3. Add its name to `src/i18n.js`.
+
+## Pictures 圖片
+
+The picture hint comes from [Openverse](https://openverse.org), which needs no key. The word is sent to Openverse from the student's browser, so pictures only appear when online. Without a result, the question simply has no picture.
+
+- It uses the first result with mature content filtered out. Results are not checked by a person, and abstract words such as `across` can give unrelated pictures. That is why the hint can be turned off.
+- Openverse images are openly licensed but most require credit, so the creator and license are shown under each picture.
+- Google Images cannot be shown inside the page without Google's paid-setup API, so it is offered as a link after answering. Showing it earlier would reveal the word.

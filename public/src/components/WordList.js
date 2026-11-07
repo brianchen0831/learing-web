@@ -3,6 +3,8 @@ import { useRoute } from 'vue-router';
 import { getWordList, getWordLists } from '../api.js';
 import { pick, t } from '../i18n.js';
 import { canSpeak, speak } from '../speech.js';
+import { buildTree } from '../wordlistTree.js';
+import WordListTree from './WordListTree.js';
 
 const dictionaryUrl = (word) =>
   'https://dictionary.cambridge.org/dictionary/english/' +
@@ -22,6 +24,7 @@ function loadFolded() {
 // The selected list is kept in the URL (?list=animals).
 export default {
   name: 'WordList',
+  components: { WordListTree },
   props: { topic: { type: String, required: true } },
   setup(props) {
     const route = useRoute();
@@ -39,6 +42,7 @@ export default {
     }
 
     const usable = computed(() => lists.value.filter((l) => !l.invalid));
+    const tree = computed(() => buildTree(lists.value));
     const selectedId = computed(() => {
       const wanted = route.query.list;
       if (usable.value.some((l) => l.id === wanted)) return wanted;
@@ -65,10 +69,11 @@ export default {
       }
     });
 
+    const fileName = (l) => l.id.split('/').pop();
     const label = (l) =>
-      l.invalid ? `${l.id} (${t('wordlist.invalid')})` : `${pick(l.title) || l.id} (${l.count})`;
+      l.invalid ? `${fileName(l)} (${t('wordlist.invalid')})` : `${pick(l.title) || fileName(l)} (${l.count})`;
 
-    return { lists, usable, current, loaded, failed, folded, toggleFold, selectedId, label, dictionaryUrl, canSpeak, speak, t };
+    return { tree, usable, current, loaded, failed, folded, toggleFold, selectedId, label, dictionaryUrl, canSpeak, speak, t };
   },
   template: `
     <p v-if="failed">{{ t('wordlist.loadError') }}</p>
@@ -85,13 +90,7 @@ export default {
           </button>
         </div>
         <div v-show="!folded" id="wordlist-nav-body">
-          <ul>
-            <li v-for="l in lists" :key="l.id">
-              <span v-if="l.invalid" class="list-invalid">{{ label(l) }}</span>
-              <RouterLink v-else :to="{ query: { list: l.id } }" :class="{ selected: l.id === selectedId }"
-                          :aria-current="l.id === selectedId ? 'true' : null">{{ label(l) }}</RouterLink>
-            </li>
-          </ul>
+          <WordListTree :nodes="tree" :selected-id="selectedId" :label="label" />
           <RouterLink class="btn" :to="'/topics/' + topic + '/new'">+ {{ t('wordlist.new') }}</RouterLink>
         </div>
       </nav>

@@ -5,7 +5,7 @@ The English topic. It has no lesson of its own and shows its subtopics as cards.
 | Subtopic | Status | Design |
 | -------- | ------ | ------ |
 | Vocabulary 單字 | Word lists | [vocabulary/DESIGN.md](vocabulary/DESIGN.md) |
-| Quiz 測驗 | To be done | [quiz/DESIGN.md](quiz/DESIGN.md) |
+| Quiz 測驗 | Vocabulary test | [quiz/DESIGN.md](quiz/DESIGN.md) |
 
 ## Folder 資料夾
 

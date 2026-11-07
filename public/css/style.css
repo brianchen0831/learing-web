@@ -208,6 +208,13 @@ figcaption { color: var(--muted); font-size: .9rem; margin-top: .3rem; }
 .wordlist-nav li a { display: block; padding: .2rem .5rem; margin: 0 -.5rem; border-radius: 6px; }
 .wordlist-nav li a:hover { background: var(--fill); text-decoration: none; }
 .wordlist-nav li a.selected { background: var(--fill); color: var(--text); font-weight: 600; }
+.wordlist-nav ul ul { margin: .1rem 0 .1rem .9rem; }
+.wordlist-nav summary { cursor: pointer; padding: .2rem 0; }
+.folder-icon { filter: grayscale(1); }
+.check-tree { list-style: none; margin: 0; padding: 0; }
+.check-tree .check-tree { margin-left: 1.4rem; }
+.check-tree summary { cursor: pointer; }
+.check-tree summary .check { display: inline-flex; font-weight: 600; }
 .list-invalid { color: var(--muted); font-size: .9rem; }
 .wordlist-nav .btn { display: block; text-align: center; }
 
@@ -266,6 +273,34 @@ figcaption { color: var(--muted); font-size: .9rem; margin-top: .3rem; }
   .word-table td { padding: .15rem 0; }
   .word-table td::before { content: attr(data-label); display: block; color: var(--muted); font-size: .8rem; }
 }
+
+/* Vocabulary test */
+.vocab-test { max-width: 720px; margin-left: auto; margin-right: auto; }
+.test-group { border: 1px solid var(--border); border-radius: 6px; margin: 0 0 1rem; padding: .5rem 1rem .7rem; }
+.test-group legend { padding: 0 .3rem; font-weight: 600; }
+.check { display: flex; align-items: center; gap: .55rem; padding: .15rem 0; cursor: pointer; }
+.check input { accent-color: var(--text); width: 1.05rem; height: 1.05rem; flex: none; }
+.count-options { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem 1.2rem; }
+.count-custom {
+  width: 5.5rem; margin-left: -.7rem; padding: .25rem .5rem; font: inherit; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: 6px;
+}
+.checklist-actions { display: flex; gap: 1rem; margin-bottom: .3rem; }
+.test-start { margin-top: 1rem; }
+.test-result { font-weight: 600; margin-top: 0; }
+.test-progress { display: flex; justify-content: space-between; margin: 0 0 .8rem; color: var(--muted); font-size: .95rem; }
+.masked {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem; margin: .5rem 0;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 1.9rem; font-weight: 600;
+}
+.masked span { min-width: 1.5rem; text-align: center; }
+.masked .blank { min-height: 1.3em; border-bottom: 2px solid var(--border-strong); }
+.masked .gap { min-width: .8rem; }
+.test-chinese { text-align: center; font-size: 1.25rem; margin: .4rem 0 .9rem; }
+.test-picture img { max-height: 240px; background: var(--fill); }
+.test-picture figcaption { font-size: .8rem; }
+.test-google { display: inline-block; margin-bottom: .4rem; }
+.test-actions { display: flex; justify-content: space-between; gap: .6rem; margin-top: 1rem; }
 
 /* Resources tree */
 .tree, .tree ul { list-style: none; padding-left: 1.2rem; margin: .2rem 0; }

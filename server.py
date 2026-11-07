@@ -6,7 +6,7 @@ Routes
                          <topic> may be a subtopic, such as english/vocabulary
   /api/wordlists/<topic>/<sub>        word lists in that database folder;
                                       POST creates a new list
-  /api/wordlists/<topic>/<sub>/<id>   one word list
+  /api/wordlists/<topic>/<sub>/<id>   one word list; <id> may include folders
   other files            static files from public/ (Vue app, content, assets)
   other paths            public/index.html (the Vue Router app handles them)
 """
@@ -16,14 +16,14 @@ import re
 import sys
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import unquote
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PUBLIC = os.path.join(ROOT, "public")
 TOPICS_DIR = os.path.join(PUBLIC, "topics")
 TOPICS_JSON = os.path.join(ROOT, "data", "topics.json")
 SLUG_RE = re.compile(r"^/api/assets/([a-z0-9-]+(?:/[a-z0-9-]+)?)/?$")
-WORDLIST_RE = re.compile(r"^/api/wordlists/([a-z0-9-]+/[a-z0-9-]+)(?:/([A-Za-z0-9_-]+))?/?$")
-LIST_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+WORDLIST_RE = re.compile(r"^/api/wordlists/([a-z0-9-]+/[a-z0-9-]+)(?:/(.+?))?/?$")
 MEANING_FIELDS = ("meaning", "chinese", "example")
 MAX_BODY = 1024 * 1024
 MAX_TITLE = 100
@@ -179,21 +179,45 @@ def save_new_wordlist(folder, wordlist):
             number += 1
 
 
-def wordlist_index(folder):
-    """Summary of each word list in a folder. Broken files are flagged, not hidden."""
+def wordlist_index(folder, prefix=""):
+    """Summary of each word list, including subfolders; folders come first.
+
+    A list's id is its path without .json, such as "grade1/part1".
+    Broken files are flagged, not hidden.
+    """
     if not os.path.isdir(folder):
         return []
-    lists = []
-    for name in sorted(os.listdir(folder), key=lambda n: os.path.splitext(n)[0].lower()):
-        list_id, extension = os.path.splitext(name)
-        if extension.lower() != ".json" or not LIST_ID_RE.match(list_id):
+    subfolders, files = [], []
+    for name in sorted(os.listdir(folder), key=str.lower):
+        full = os.path.join(folder, name)
+        if name.startswith(".") or os.path.islink(full):
             continue
+        if os.path.isdir(full):
+            subfolders.append(name)
+        elif os.path.splitext(name)[1].lower() == ".json":
+            files.append(name)
+    lists = []
+    for name in subfolders:
+        lists.extend(wordlist_index(os.path.join(folder, name), f"{prefix}{name}/"))
+    for name in sorted(files, key=lambda n: os.path.splitext(n)[0].lower()):
+        list_id = prefix + os.path.splitext(name)[0]
         data = read_wordlist(os.path.join(folder, name))
         if data is None:
             lists.append({"id": list_id, "invalid": True})
         else:
             lists.append({"id": list_id, "title": data.get("title"), "count": len(data["words"])})
     return lists
+
+
+def wordlist_file(folder, list_id):
+    """Path of a list inside folder, or None if the id would lead anywhere else."""
+    parts = list_id.split("/")
+    for part in parts:
+        if not part or part.startswith(".") or any(c in part for c in '\\:\0'):
+            return None
+    path = os.path.join(folder, *parts) + ".json"
+    root = os.path.realpath(folder) + os.sep
+    return path if os.path.realpath(path).startswith(root) else None
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -234,7 +258,8 @@ class Handler(SimpleHTTPRequestHandler):
             if match.group(2) is None:
                 self.send_json(wordlist_index(folder))
                 return
-            data = read_wordlist(os.path.join(folder, match.group(2) + ".json"))
+            file = wordlist_file(folder, unquote(match.group(2)))
+            data = read_wordlist(file) if file else None
             if data is None:
                 self.send_json({"error": "word list not found or not valid"}, 404)
             else:

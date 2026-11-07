@@ -4,13 +4,14 @@ import TopicSection from '../components/TopicSection.js';
 import AssetTree from '../components/AssetTree.js';
 import QuizBlock from '../components/QuizBlock.js';
 import WordList from '../components/WordList.js';
+import VocabularyTest from '../components/VocabularyTest.js';
 import { assetUrl, getAssets, getContent } from '../api.js';
 import { lang, t } from '../i18n.js';
 
 // Shows a topic (/topics/english) or a subtopic (/topics/english/vocabulary).
 export default {
   name: 'TopicView',
-  components: { TopicCard, TopicSection, AssetTree, QuizBlock, WordList },
+  components: { TopicCard, TopicSection, AssetTree, QuizBlock, WordList, VocabularyTest },
   props: {
     slug: { type: String, required: true },
     sub: { type: String, default: '' },
@@ -63,6 +64,7 @@ export default {
     );
 
     const isWordList = computed(() => !!data.value && data.value.view === 'wordlist');
+    const testSource = computed(() => (data.value && data.value.view === 'vocabulary-test' ? data.value.source : ''));
 
     const backTo = computed(() => (props.sub ? `/topics/${props.slug}` : '/'));
     const backLabel = computed(() => {
@@ -75,7 +77,7 @@ export default {
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    return { path, status, c, tree, sections, hasQuiz, hasLesson, subtopics, isWordList, heroStyle, backTo, backLabel, scrollTo, t };
+    return { path, status, c, tree, sections, hasQuiz, hasLesson, subtopics, isWordList, testSource, heroStyle, backTo, backLabel, scrollTo, t };
   },
   template: `
     <main>
@@ -95,6 +97,9 @@ export default {
         </div>
         <div v-if="isWordList" class="wordlist">
           <WordList :key="path" :topic="path" />
+        </div>
+        <div v-else-if="testSource" class="wordlist">
+          <VocabularyTest :key="path" :slug="path" :source="testSource" />
         </div>
         <section v-else-if="!hasLesson && !subtopics.length" class="lesson todo">{{ t('topic.todo') }}</section>
         <div v-if="hasLesson" class="layout">

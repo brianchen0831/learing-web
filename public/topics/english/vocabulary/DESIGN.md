@@ -8,13 +8,13 @@ Word lists for learning English. Each list is stored in the database, and the pa
 
 `content.json` has `"view": "wordlist"` at the top level, which shows word lists instead of a lesson.
 
-- **Sidebar:** lists the word lists and has the **+ New list** button. The arrow at its top folds it. The choice is remembered in the browser (`localStorage`, `wordlist.folded`).
-- **Selected list:** kept in the URL, for example `/topics/english/vocabulary?list=animals`. An unknown list falls back to the first one.
+- **Sidebar:** shows the word lists as a folder view and has the **+ New list** button. The folder holding the selected list opens by itself. The arrow at the top folds the sidebar, and the choice is remembered in the browser (`localStorage`, `wordlist.folded`).
+- **Selected list:** kept in the URL, for example `/topics/english/vocabulary?list=grade1/animals`. An unknown list falls back to the first one.
 - **Table:** a word with several meanings spans several rows.
 - **Dictionary link:** each word links to `https://dictionary.cambridge.org/dictionary/english/<word>`. Spaces in a phrase become `-`.
 - **Pronunciation:** the speaker button left of each word reads it aloud with the browser's speech engine (`src/speech.js`). It prefers a Google voice, which Chrome provides; other browsers use their own English voice. The button is hidden if the browser has no speech engine.
 
-Main code: `src/components/WordList.js`, `src/components/WordDialog.js`, `src/views/WordListEditorView.js`.
+Main code: `src/components/WordList.js`, `src/components/WordListTree.js`, `src/components/WordDialog.js`, `src/views/WordListEditorView.js`.
 
 ## New list page 新增單字表
 
@@ -24,7 +24,18 @@ A word needs at least one filled-in meaning. Saving needs a list name and at lea
 
 ## Word list format 單字表格式
 
-Each list is one JSON file in the database, for example `database/english/vocabulary/animals.json`. The file name without `.json` is the list's id; it may use letters, numbers, `-` and `_`.
+Each list is one JSON file in the database, for example `database/english/vocabulary/animals.json`. Lists can sit in folders at any depth, and folder names may use Chinese:
+
+```
+database/english/vocabulary/
+├── animals.json
+└── grade1/
+    ├── part1.json
+    └── review/
+        └── part2.json
+```
+
+A list's id is its path without `.json`, for example `grade1/review/part2`. Names starting with `.` are skipped.
 
 ```json
 {
@@ -53,7 +64,7 @@ Each list is one JSON file in the database, for example `database/english/vocabu
 
 - You can also add a list by saving a `.json` file in the folder and refreshing the browser. No restart is needed.
 - A file that breaks these rules still appears in the sidebar, marked as having errors, but cannot be selected.
-- New lists from the site are named after the list name, for example `my-words.json`, or `list.json` when the name has no English letters or numbers. A number is added if the name is taken, so existing files are never replaced.
+- New lists from the site are saved at the top of the folder, and can be moved into a subfolder by hand. They are named after the list name, for example `my-words.json`, or `list.json` when the name has no English letters or numbers. A number is added if the name is taken, so existing files are never replaced.
 - A list created on the site stores its name in both `en` and `zh`.
 - The default `database/` folder is not in git, so a fresh clone starts with no word lists.
 
@@ -61,8 +72,8 @@ Each list is one JSON file in the database, for example `database/english/vocabu
 
 | Endpoint | Returns |
 | -------- | ------- |
-| `GET /api/wordlists/<topic>/<sub>` | `[{ "id", "title", "count" }]`, or `{ "id", "invalid": true }` for a broken file. Empty if there are none. |
-| `GET /api/wordlists/<topic>/<sub>/<id>` | The whole list; `404` if it is missing or broken |
+| `GET /api/wordlists/<topic>/<sub>` | Every list, including subfolders, folders first: `[{ "id", "title", "count" }]`, or `{ "id", "invalid": true }` for a broken file. Empty if there are none. |
+| `GET /api/wordlists/<topic>/<sub>/<id>` | The whole list; `404` if it is missing, broken, or the path leaves the folder |
 | `POST /api/wordlists/<topic>/<sub>` | Creates a list from `{ "title": "name", "words": [...] }` and returns `201` with `{ "id" }`, or an `{ "error" }` message |
 
 Saving only accepts `application/json` requests up to 1 MB from this site's own pages (`Host` must be `localhost` or `127.0.0.1`, and `Origin` must match), so other websites open in the browser cannot write to the database. `<topic>/<sub>` must be a real subtopic.

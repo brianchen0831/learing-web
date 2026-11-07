@@ -48,7 +48,7 @@ learning-web/
 | Math 數學 | To be done | [DESIGN.md](public/topics/math/DESIGN.md) |
 | English 英文 | Has subtopics | [DESIGN.md](public/topics/english/DESIGN.md) |
 | English: Vocabulary 單字 | Word lists | [DESIGN.md](public/topics/english/vocabulary/DESIGN.md) |
-| English: Quiz 測驗 | To be done | [DESIGN.md](public/topics/english/quiz/DESIGN.md) |
+| English: Quiz 測驗 | Vocabulary test | [DESIGN.md](public/topics/english/quiz/DESIGN.md) |
 | Chinese 中文 | To be done | [DESIGN.md](public/topics/chinese/DESIGN.md) |
 
 ## Config and database 設定與資料庫

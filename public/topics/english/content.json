@@ -8,7 +8,7 @@
     {
       "slug": "quiz",
       "title": { "en": "Quiz", "zh": "測驗" },
-      "summary": { "en": "To be done", "zh": "待完成" }
+      "summary": { "en": "Test your vocabulary", "zh": "單字測驗" }
     }
   ],
   "en": { "title": "English", "sections": [], "quiz": [] },

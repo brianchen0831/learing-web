@@ -1,4 +1,6 @@
 {
+  "view": "vocabulary-test",
+  "source": "english/vocabulary",
   "en": { "title": "Quiz", "sections": [], "quiz": [] },
   "zh": { "title": "測驗", "sections": [], "quiz": [] }
 }

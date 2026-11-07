@@ -25,6 +25,26 @@ export const getAssets = (topic) => getJSON(`/api/assets/${enc(topic)}`, { allow
 export const getWordLists = (topic) => getJSON(`/api/wordlists/${enc(topic)}`);
 export const getWordList = (topic, id) => getJSON(`/api/wordlists/${enc(topic)}/${enc(id)}`);
 
+// First picture for a word from Openverse (openly licensed images, no key needed).
+// Returns null when there is none, including when the computer is offline.
+export async function findPicture(word) {
+  try {
+    const data = await getJSON(
+      `https://api.openverse.org/v1/images/?q=${encodeURIComponent(word)}&page_size=1&mature=false`,
+    );
+    const image = data.results[0];
+    if (!image) return null;
+    return {
+      url: image.thumbnail,
+      creator: image.creator,
+      license: image.license ? `CC ${image.license.toUpperCase()}` : '',
+      link: image.foreign_landing_url,
+    };
+  } catch {
+    return null;
+  }
+}
+
 // Saves a new list and returns its id. Throws an Error with the server's message.
 export async function createWordList(topic, list) {
   const url = `/api/wordlists/${enc(topic)}`;
