@@ -7,6 +7,7 @@ Routes
   /api/wordlists/<topic>/<sub>        word lists in that database folder;
                                       POST creates a new list
   /api/wordlists/<topic>/<sub>/<id>   one word list; <id> may include folders
+  /api/account/...       register, login, logout, avatar and me (see account/)
   other files            static files from public/ (Vue app, content, assets)
   other paths            public/index.html (the Vue Router app handles them)
 """
@@ -17,6 +18,14 @@ import sys
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote
+
+try:
+    from account.doll import Catalog
+    from account.keys import load_secret
+    from account.routes import ACTIONS as ACCOUNT_ACTIONS, AccountRoutes
+    from account.store import AccountStore, Sessions
+except ModuleNotFoundError as error:
+    sys.exit(f"Missing package {error.name}. Run: python -m pip install -r requirements.txt")
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PUBLIC = os.path.join(ROOT, "public")
@@ -32,7 +41,9 @@ MAX_WORDS = 2000
 MAX_MEANINGS = 20
 LOCAL_HOSTS = ("localhost", "127.0.0.1")
 CONFIG_FILE = os.path.join(ROOT, "config.json")
-DEFAULT_CONFIG = {"database_path": "database"}
+DEFAULT_CONFIG = {"database_path": "database", "secret_key_path": "secret.key"}
+DOLL_CATALOG = os.path.join(PUBLIC, "assets", "avatars", "doll", "parts.json")
+ACCOUNTS_FOLDER = "accounts"
 
 
 def load_config():
@@ -51,12 +62,16 @@ def load_config():
     return config
 
 
-def database_dir(config):
-    """Absolute database folder. Relative paths start at the project folder."""
-    path = config["database_path"]
+def config_path(config, setting):
+    """Absolute path from a setting. Relative paths start at the project folder."""
+    path = config[setting]
     if not isinstance(path, str) or not path.strip():
-        sys.exit('config.json: "database_path" must be a non-empty string')
+        sys.exit(f'config.json: "{setting}" must be a non-empty string')
     return os.path.normpath(os.path.join(ROOT, os.path.expanduser(path)))
+
+
+def database_dir(config):
+    return config_path(config, "database_path")
 
 
 def topic_folders():
@@ -79,7 +94,7 @@ def topic_folders():
 def ensure_database(path):
     """Create the database folder with one folder per topic and subtopic."""
     try:
-        for folder in topic_folders():
+        for folder in [*topic_folders(), ACCOUNTS_FOLDER]:
             os.makedirs(os.path.join(path, *folder.split("/")), exist_ok=True)
     except OSError as error:
         sys.exit(f"Cannot create database folder {path}: {error}")
@@ -220,7 +235,7 @@ def wordlist_file(folder, list_id):
     return path if os.path.realpath(path).startswith(root) else None
 
 
-class Handler(SimpleHTTPRequestHandler):
+class Handler(AccountRoutes, SimpleHTTPRequestHandler):
     database = None  # set in main()
 
     extensions_map = {
@@ -233,16 +248,22 @@ class Handler(SimpleHTTPRequestHandler):
         ".csv": "text/csv; charset=utf-8",
     }
 
-    def send_json(self, payload, status=200):
+    def send_json(self, payload, status=200, cookie=None):
         body = payload if isinstance(payload, bytes) else json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        if cookie:
+            self.send_header("Set-Cookie", cookie)
         self.end_headers()
         self.wfile.write(body)
 
     def do_GET(self):
         path = self.path.split("?")[0]
+
+        if path == "/api/account/me":
+            self.account_me()
+            return
 
         if path == "/api/topics":
             try:
@@ -292,29 +313,40 @@ class Handler(SimpleHTTPRequestHandler):
         origin = self.headers.get("Origin")
         return host.split(":")[0] in LOCAL_HOSTS and origin in (None, f"http://{host}")
 
-    def do_POST(self):
-        match = WORDLIST_RE.match(self.path.split("?")[0])
-        if not match or match.group(2) is not None or match.group(1) not in topic_folders():
-            self.send_json({"error": "not found"}, 404)
-            return
+    def read_request(self):
+        """Parsed JSON body of a request from this site, or None after replying with an error."""
         if not self.from_this_site():
             self.send_json({"error": "forbidden"}, 403)
-            return
+            return None
         if self.headers.get("Content-Type", "").split(";")[0].strip() != "application/json":
             self.send_json({"error": "expected application/json"}, 415)
-            return
+            return None
         try:
             length = int(self.headers.get("Content-Length", ""))
         except ValueError:
             self.send_json({"error": "missing length"}, 411)
-            return
+            return None
         if not 0 < length <= MAX_BODY:
             self.send_json({"error": "the list is too large"}, 413)
-            return
+            return None
         try:
-            data = json.loads(self.rfile.read(length).decode("utf-8"))
+            return json.loads(self.rfile.read(length).decode("utf-8"))
         except ValueError:
             self.send_json({"error": "not valid JSON"}, 400)
+            return None
+
+    def do_POST(self):
+        path = self.path.split("?")[0]
+        if path in ACCOUNT_ACTIONS:
+            self.handle_account_post(path)
+            return
+
+        match = WORDLIST_RE.match(path)
+        if not match or match.group(2) is not None or match.group(1) not in topic_folders():
+            self.send_json({"error": "not found"}, 404)
+            return
+        data = self.read_request()
+        if data is None:
             return
         wordlist, error = clean_wordlist(data)
         if error:
@@ -344,9 +376,14 @@ class Handler(SimpleHTTPRequestHandler):
 
 def main():
     port = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("PORT", 3000))
-    database = database_dir(load_config())
+    config = load_config()
+    database = database_dir(config)
     ensure_database(database)
+    accounts_folder = os.path.join(database, ACCOUNTS_FOLDER)
+    secret = load_secret(config_path(config, "secret_key_path"), accounts_folder)
     Handler.database = database
+    Handler.accounts = AccountStore(accounts_folder, secret, Catalog(DOLL_CATALOG))
+    Handler.sessions = Sessions()
     handler = partial(Handler, directory=PUBLIC)
     with ThreadingHTTPServer(("127.0.0.1", port), handler) as httpd:
         print(f"Database: {database}")

@@ -1,5 +1,5 @@
 <#
-  Installs the requirements for Learning Web on Windows: Git and Python.
+  Installs the requirements for Learning Web on Windows: Git, Python and Python packages.
   Usage (PowerShell):  .\setup.ps1
   If scripts are blocked:  powershell -ExecutionPolicy Bypass -File .\setup.ps1
 #>
@@ -28,5 +28,12 @@ Install-Package 'Git.Git' 'Git' 'git'
 Install-Package 'Python.Python.3.12' 'Python 3.12' 'python'
 
 Write-Host ""
-Write-Host "Done. Close and reopen your terminal so PATH updates, then run:"
+if (Test-RealCommand 'python') {
+    Write-Host "[..] Installing Python packages"
+    python -m pip install -r "$PSScriptRoot\requirements.txt"
+    Write-Host "Done. Start the site with:"
+} else {
+    Write-Host "Done. Close and reopen your terminal so PATH updates, then run:"
+    Write-Host "  python -m pip install -r requirements.txt"
+}
 Write-Host "  python server.py"

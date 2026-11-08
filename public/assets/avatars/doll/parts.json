@@ -1,0 +1,75 @@
+{
+  "genders": [
+    { "id": "male", "label": { "en": "Boy", "zh": "男生" } },
+    { "id": "female", "label": { "en": "Girl", "zh": "女生" } }
+  ],
+  "skins": [
+    { "id": "light", "color": "#f8dcc4" },
+    { "id": "warm", "color": "#eec39a" },
+    { "id": "tan", "color": "#c98f62" },
+    { "id": "deep", "color": "#8a5a3c" }
+  ],
+  "layers": [
+    { "id": "background", "label": { "en": "Background", "zh": "背景" } },
+    { "id": "back", "label": { "en": "Back", "zh": "背飾" } },
+    { "id": "body" },
+    { "id": "socks", "label": { "en": "Socks", "zh": "襪子" } },
+    { "id": "shoes", "label": { "en": "Shoes", "zh": "鞋子" } },
+    { "id": "lower", "label": { "en": "Lower body", "zh": "下身" }, "required": true },
+    { "id": "upper", "label": { "en": "Upper body", "zh": "上身" }, "required": true },
+    { "id": "makeup", "label": { "en": "Makeup", "zh": "妝容" } },
+    { "id": "eyes", "label": { "en": "Eyes", "zh": "眼睛" }, "required": true },
+    { "id": "nose", "label": { "en": "Nose", "zh": "鼻子" }, "required": true },
+    { "id": "mouth", "label": { "en": "Mouth", "zh": "嘴巴" }, "required": true },
+    { "id": "hair", "label": { "en": "Hair", "zh": "頭髮" }, "required": true },
+    { "id": "accessory", "label": { "en": "Accessories", "zh": "配件" } },
+    { "id": "foreground", "label": { "en": "Foreground", "zh": "前景" } },
+    { "id": "pet", "label": { "en": "Pets", "zh": "寵物" } }
+  ],
+  "head": {
+    "male": "250 60 220 220",
+    "female": "250 80 220 220"
+  },
+  "parts": [
+    {
+      "id": "eyes-simple", "layer": "eyes", "price": 0, "default": true,
+      "label": { "en": "Simple eyes", "zh": "簡單眼睛" },
+      "files": { "male": "male/eyes-simple.png", "female": "female/eyes-simple.png" }
+    },
+    {
+      "id": "nose-simple", "layer": "nose", "price": 0, "default": true,
+      "label": { "en": "Simple nose", "zh": "簡單鼻子" },
+      "files": { "male": "male/nose-simple.png", "female": "female/nose-simple.png" }
+    },
+    {
+      "id": "mouth-smile", "layer": "mouth", "price": 0, "default": true,
+      "label": { "en": "Smile", "zh": "微笑" },
+      "files": { "male": "male/mouth-smile.png", "female": "female/mouth-smile.png" }
+    },
+    {
+      "id": "hair-short-black", "layer": "hair", "price": 0, "default": true,
+      "label": { "en": "Very short black hair", "zh": "黑色極短髮" },
+      "files": { "male": "male/hair-short-black.png", "female": "female/hair-short-black.png" }
+    },
+    {
+      "id": "vest-white", "layer": "upper", "price": 0, "default": true,
+      "label": { "en": "White vest", "zh": "白色背心" },
+      "files": { "male": "male/vest-white.png", "female": "female/vest-white.png" }
+    },
+    {
+      "id": "shorts-white", "layer": "lower", "price": 0, "default": true,
+      "label": { "en": "White shorts", "zh": "白色短褲" },
+      "files": { "male": "male/shorts-white.png", "female": "female/shorts-white.png" }
+    },
+    {
+      "id": "hair-wavy-black", "layer": "hair", "price": 60, "view": "250 40 220 200",
+      "label": { "en": "Wavy black hair", "zh": "黑色波浪髮" },
+      "files": { "male": "male/hair-wavy-black.png" }
+    },
+    {
+      "id": "hair-pixie-brown", "layer": "hair", "price": 60, "view": "250 50 220 200",
+      "label": { "en": "Brown pixie cut", "zh": "棕色精靈短髮" },
+      "files": { "female": "female/hair-pixie-brown.png" }
+    }
+  ]
+}

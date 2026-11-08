@@ -6,7 +6,7 @@
 
 ## English
 
-A local learning website for students: a Vue 3 single-page app served by a small Python server. The server uses only the Python standard library (3.8+) and Vue is stored in the repo, so there is nothing to install beyond Python itself.
+A local learning website for students: a Vue 3 single-page app served by a small Python server. It needs Python 3.8+ and one package, `cryptography`, which encrypts accounts. Vue is stored in the repo, so Node.js is not needed.
 
 ### Setup (Windows)
 
@@ -14,7 +14,7 @@ A local learning website for students: a Vue 3 single-page app served by a small
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
 ```
 
-This installs Git and Python via winget. Reopen your terminal afterwards.
+This installs Git, Python and the Python packages. If Python was just installed, reopen your terminal and run `python -m pip install -r requirements.txt`.
 
 ### Run
 
@@ -38,10 +38,13 @@ Your settings are in `config.json`, which is not committed. Copy `config.example
 
 At startup, the server creates one folder per topic and subtopic, such as `database/english/vocabulary` and `database/english/quiz`.
 
+`secret_key_path` sets where the key that encrypts accounts is kept. The default is `secret.key` in the project folder, created on first start and ignored by git. **Keep a safe copy: without this key, accounts can never be read again.** See [account/DESIGN.md](account/DESIGN.md).
+
 ### Structure
 
 - `setup.ps1` – installs Git and Python on Windows
-- `server.py` – Python server: static files, `/api/topics`, `/api/assets/<topic>`, and fallback to the Vue app
+- `server.py` – Python server: static files, the API, and fallback to the Vue app
+- `account/` – server code for encrypted accounts and login sessions; the website part is in `public/src/account/`
 - `data/topics.json` – topics shown on the home page (titles in `en` and `zh`)
 - `public/index.html` – the single HTML page that loads the Vue app
 - `public/src/` – the Vue 3 app: `main.js`, `App.js`, `router.js`, `i18n.js`, `api.js`, `store.js`, `components/`, `views/`
@@ -62,7 +65,7 @@ Each topic folder also has an `assets/` folder (images, worksheets, … with any
 
 ## 中文
 
-這是給學生使用的本機學習網站：以 Vue 3 單頁應用程式為前端，由小型 Python 伺服器提供服務。伺服器只使用 Python 標準函式庫（3.8 以上），Vue 檔案也已放在專案內，除了 Python 本身外不需要安裝任何套件。
+這是給學生使用的本機學習網站：以 Vue 3 單頁應用程式為前端，由小型 Python 伺服器提供服務。需要 Python 3.8 以上，以及用來加密帳號的 `cryptography` 套件。Vue 檔案已放在專案內，不需要 Node.js。
 
 ### 安裝環境（Windows）
 
@@ -70,7 +73,7 @@ Each topic folder also has an `assets/` folder (images, worksheets, … with any
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
 ```
 
-此腳本會透過 winget 安裝 Git 與 Python，安裝完成後請重新開啟終端機。
+此腳本會安裝 Git、Python 與 Python 套件。如果 Python 是剛安裝的，請重新開啟終端機，再執行 `python -m pip install -r requirements.txt`。
 
 ### 執行
 
@@ -94,10 +97,13 @@ python server.py        # 或指定連接埠：python server.py 8080
 
 伺服器啟動時會為每個主題和子主題建立資料夾，例如 `database/english/vocabulary` 和 `database/english/quiz`。
 
+`secret_key_path` 用來指定加密帳號的金鑰位置。預設是專案資料夾內的 `secret.key`，第一次啟動時自動建立，git 會忽略它。**請妥善備份：金鑰遺失後，帳號將永遠無法讀取。** 詳見 [account/DESIGN.md](account/DESIGN.md)。
+
 ### 專案結構
 
 - `setup.ps1` – 在 Windows 上安裝 Git 與 Python
-- `server.py` – Python 伺服器：靜態檔案、`/api/topics`、`/api/assets/<主題>`，其他路徑交給 Vue 應用程式
+- `server.py` – Python 伺服器：靜態檔案、API，其他路徑交給 Vue 應用程式
+- `account/` – 加密帳號與登入狀態的伺服器程式；網站部分在 `public/src/account/`
 - `data/topics.json` – 首頁顯示的主題清單（含 `en`、`zh` 標題）
 - `public/index.html` – 載入 Vue 應用程式的唯一 HTML 頁面
 - `public/src/` – Vue 3 應用程式：`main.js`、`App.js`、`router.js`、`i18n.js`、`api.js`、`store.js`、`components/`、`views/`

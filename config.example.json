@@ -1,3 +1,4 @@
 {
-  "database_path": "database"
+  "database_path": "database",
+  "secret_key_path": "secret.key"
 }
