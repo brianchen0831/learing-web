@@ -12,6 +12,7 @@ async function post(url, body) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'failed');
   user.value = data.user;
+  return data;
 }
 
 // Resolves once the server has said who is logged in.
@@ -25,3 +26,12 @@ export const login = (name, password) => post('/api/account/login', { name, pass
 export const logout = () => post('/api/account/logout', {});
 export const saveAvatar = (avatar) => post('/api/account/avatar', { avatar });
 export const buyItem = (item) => post('/api/account/buy', { item });
+// A finished test: { topic, test, lists, total, answered, correct }. Resolves with the tasks it completed.
+export const reportResult = (result) => post('/api/account/results', result).then((data) => data.completed || []);
+export async function getTasks() {
+  const res = await fetch('/api/account/tasks');
+  const data = await res.json().catch(() => ({}));
+  // A server without the tasks feature answers with the web page, which is not a task list
+  if (!res.ok || !Array.isArray(data.tasks)) throw new Error(data.error || 'failed');
+  return data.tasks;
+}

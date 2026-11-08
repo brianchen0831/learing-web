@@ -140,3 +140,87 @@ The defaults were cut from the generated images in `account/avatar-art/`. The pa
 The female eyes, nose, mouth and hair come from `hair-style/hair-simpe-female-01.jpg`, and the brown pixie cut from `hair-simple-female-02.jpg`. Their heads are smaller than the template's, so the head was placed on its own: the ears were lined up and the image scaled to 110%. The nose and lips keep only how much darker they are than the drawn skin, so they suit every skin color.
 
 Known flaws: faint brown pocket stitching on the shorts, a tiny skin-colored mark at the female body's left waist, and a faint light line under the female brows on the darkest skin.
+## Tasks and rewards 任務與獎勵
+
+Users earn rewards by completing tasks. Each top-level topic page links to its own **Tasks** page at `/topics/<topic>/tasks` (`public/src/views/TopicTasksView.js`), listing the tasks whose condition uses that topic or a subtopic: open tasks first with progress, completed tasks after them in gray. Both task pages draw the list with `public/src/account/TaskList.js`. Main code: `account/rewards.py` (task format, conditions, result checks), `AccountStore.record_run` and `task_list` in `account/store.py`, and `public/src/account/TasksView.js` for the **Tasks and rewards** page at `/account/tasks`.
+
+### Data 資料
+
+| What | Where | Encrypted |
+| ---- | ----- | --------- |
+| Task definitions | every `.json` file in a top-level topic's task folder, such as `<database>/english/task/` | no |
+| A user's test results, per topic | `<database>/<topic>/results/<account id>.json` | yes |
+| A user's completed tasks | the account record, `tasks` | yes |
+
+User results are kept per topic so each topic stores its own kind of data, and conditions read them. The vocabulary test saves to `database/english/quiz/results/`. The file name is the same keyed hash as the account file.
+
+### Task 任務
+
+Each task file holds `{ "tasks": [ ... ] }`. More examples of conditions are in [tasks.example.json](tasks.example.json), which the server does not read.
+
+```json
+{
+  "id": "sb-g1-part1-perfect-3",
+  "name": { "en": "Part 1 master", "zh": "第一部分達人" },
+  "description": { "en": "...", "zh": "..." },
+  "reward": { "coins": 100, "items": [] },
+  "condition": {
+    "type": "quiz", "topic": "english/quiz", "test": "fill-blank",
+    "list": "spelling-bee/spelling-bee-grade1-part1",
+    "result": "perfect", "count": 3, "min_questions": 20
+  }
+}
+```
+
+| Field | Required | Meaning |
+| ----- | -------- | ------- |
+| `id` | yes | Internal id: lowercase letters, numbers and `-`. Never change it once users have completed the task. |
+| `name` | yes | Task name: text, or `en` and `zh` |
+| `reward` | yes | `coins` (whole number) and/or `items` (doll part ids, given as owned). It cannot be empty. |
+| `description` | no | Shown on the tasks page |
+| `condition` | yes | When the task is complete, below |
+
+Quiz condition 測驗條件:
+
+| Field | Default | Meaning |
+| ----- | ------- | ------- |
+| `type` | – | `quiz` |
+| `topic` | – | The quiz page, such as `english/quiz` |
+| `test` | `any` | `fill-blank`, `hangman` or `any` |
+| `list` | – | Only tests on exactly this list, such as `spelling-bee/spelling-bee-grade1-part1` |
+| `folder` | – | Only tests whose lists are all in this folder, such as `spelling-bee`. Use `list` or `folder`, or neither for any list. |
+| `result` | `completed` | `completed`: every question answered. `perfect`: completed with every answer right. |
+| `count` | 1 | How many matching tests are needed |
+| `min_questions` | 1 | Tests with fewer questions do not count |
+
+- Each top-level topic has a task folder, `<database>/<topic>/task/`, created at startup. Every `.json` file in it is read, so each kind of task can have its own file.
+- A task must name its `condition.topic`, which must be the folder's topic or one of its subtopics: a task in `english/task/` may use `english/quiz`, not `math/quiz`.
+- Ids must be different across all the files; a repeated id is skipped. Do not name a subtopic `task`, because that folder holds the tasks.
+- `<database>/english/task/spelling-bee-fill-blank.json` holds three fill-in-the-blank tasks for each Spelling Bee list: a perfect full test once (10 coins), 5 times (10 more) and 10 times (20 more). "Full" is `min_questions` 25, every word of the list.
+- The server reads the task files again whenever one changes, so tasks can be added or edited without a restart.
+- A task with a mistake is skipped, and the reason is printed on the server console. The others still work.
+- Each task is completed once. Its reward is given at once, and the completion is kept even if the task is later removed.
+- Tests taken before a task was added count towards it.
+
+### Test results 測驗結果
+
+When a logged-in user finishes a vocabulary test, the site sends `POST /api/account/results`:
+
+```json
+{ "topic": "english/quiz", "test": "fill-blank", "lists": ["spelling-bee/spelling-bee-grade1-part1"],
+  "total": 25, "answered": 25, "correct": 25 }
+```
+
+The server checks:
+- the topic is a vocabulary-test page and the test type exists
+- every list exists in that page's word list folder
+- `total` is at most the number of different words in those lists
+- `correct` ≤ `answered` ≤ `total`
+
+It then adds the run, with the time, to the user's results for that topic, keeping the latest 2000. Then it gives the reward of every task the run completes, and replies with those tasks. `GET /api/account/tasks` lists every task, with `done_at` for completed ones and `progress: [done, needed]` for the rest.
+
+Account record 帳號紀錄: `"tasks": [{ "id": "first-quiz", "at": 1762600000 }]`
+
+### Limits 限制
+
+**Results are reported by the browser**, so a user who knows how could send a perfect score without taking the test, and collect the coins. The server checks that a result is possible, not that it happened. That is acceptable in test mode on one computer. Before real use, the server should pick the words and check the answers itself, at least for tasks with rewards.

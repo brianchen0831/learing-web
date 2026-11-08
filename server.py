@@ -22,6 +22,7 @@ from urllib.parse import unquote
 try:
     from account.doll import Catalog
     from account.keys import load_secret
+    from account.rewards import TaskBook
     from account.routes import ACTIONS as ACCOUNT_ACTIONS, AccountRoutes
     from account.store import AccountStore, Sessions
 except ModuleNotFoundError as error:
@@ -44,6 +45,7 @@ CONFIG_FILE = os.path.join(ROOT, "config.json")
 DEFAULT_CONFIG = {"database_path": "database", "secret_key_path": "secret.key"}
 DOLL_CATALOG = os.path.join(PUBLIC, "assets", "avatars", "doll", "parts.json")
 ACCOUNTS_FOLDER = "accounts"
+TASK_FOLDER = "task"  # <database>/<topic>/task/ holds that topic's task files
 
 
 def load_config():
@@ -92,9 +94,11 @@ def topic_folders():
 
 
 def ensure_database(path):
-    """Create the database folder with one folder per topic and subtopic."""
+    """Create the database folder with one folder per topic and subtopic, and a task
+    folder in each top-level topic."""
+    task_folders = [f"{topic}/{TASK_FOLDER}" for topic in topic_folders() if "/" not in topic]
     try:
-        for folder in [*topic_folders(), ACCOUNTS_FOLDER]:
+        for folder in [*topic_folders(), *task_folders, ACCOUNTS_FOLDER]:
             os.makedirs(os.path.join(path, *folder.split("/")), exist_ok=True)
     except OSError as error:
         sys.exit(f"Cannot create database folder {path}: {error}")
@@ -238,6 +242,31 @@ def wordlist_file(folder, list_id):
 class Handler(AccountRoutes, SimpleHTTPRequestHandler):
     database = None  # set in main()
 
+    @staticmethod
+    def quiz_source(topic):
+        """The subtopic whose word lists a vocabulary-test page uses, or None."""
+        if topic not in topic_folders():
+            return None
+        try:
+            with open(os.path.join(TOPICS_DIR, *topic.split("/"), "content.json"), encoding="utf-8") as f:
+                content = json.load(f)
+        except (OSError, ValueError):
+            return None
+        source = content.get("source") if content.get("view") == "vocabulary-test" else None
+        return source if source in topic_folders() else None
+
+    def words_in(self, source, lists):
+        """Number of different words in the lists, or None if one is missing or broken."""
+        folder = os.path.join(self.database, *source.split("/"))
+        words = set()
+        for list_id in lists:
+            path = wordlist_file(folder, list_id)
+            data = read_wordlist(path) if path else None
+            if data is None:
+                return None
+            words.update(w["word"].strip().lower() for w in data["words"])
+        return len(words)
+
     extensions_map = {
         **SimpleHTTPRequestHandler.extensions_map,
         ".js": "text/javascript",
@@ -263,6 +292,10 @@ class Handler(AccountRoutes, SimpleHTTPRequestHandler):
 
         if path == "/api/account/me":
             self.account_me()
+            return
+
+        if path == "/api/account/tasks":
+            self.account_tasks()
             return
 
         if path == "/api/topics":
@@ -382,7 +415,27 @@ def main():
     accounts_folder = os.path.join(database, ACCOUNTS_FOLDER)
     secret = load_secret(config_path(config, "secret_key_path"), accounts_folder)
     Handler.database = database
-    Handler.accounts = AccountStore(accounts_folder, secret, Catalog(DOLL_CATALOG))
+    catalog = Catalog(DOLL_CATALOG)
+    def task_files():
+        """Every .json file in each top-level topic's task folder, such as
+        <database>/english/task/. One file per kind of task keeps them easy to manage."""
+        folders = [(os.path.join(database, topic, TASK_FOLDER), topic)
+                   for topic in topic_folders() if "/" not in topic]
+        files = []
+        for folder, topic in folders:
+            try:
+                names = sorted(os.listdir(folder), key=str.lower)
+            except OSError:
+                continue
+            for name in names:
+                if name.lower().endswith(".json"):
+                    path = os.path.join(folder, name)
+                    if os.path.isfile(path) and not os.path.islink(path):
+                        files.append((path, topic))
+        return files
+
+    tasks = TaskBook(task_files, catalog)
+    Handler.accounts = AccountStore(accounts_folder, secret, catalog, database, tasks)
     Handler.sessions = Sessions()
     handler = partial(Handler, directory=PUBLIC)
     with ThreadingHTTPServer(("127.0.0.1", port), handler) as httpd:

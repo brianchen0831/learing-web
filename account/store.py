@@ -17,6 +17,7 @@ import unicodedata
 from cryptography.fernet import Fernet, InvalidToken
 
 from .doll import AVATAR_VERSION
+from .rewards import MAX_RUNS, RESULTS_FOLDER, RESULTS_VERSION, progress
 
 SCRYPT = {"n": 2 ** 15, "r": 8, "p": 1, "maxmem": 64 * 1024 * 1024, "dklen": 32}
 MIN_PASSWORD = 6
@@ -90,10 +91,12 @@ def clean_avatar(avatar, catalog, owned):
 
 
 class AccountStore:
-    def __init__(self, folder, secret, catalog):
+    def __init__(self, folder, secret, catalog, database=None, tasks=None):
         secret = base64.urlsafe_b64decode(secret)
         derive = lambda label: hmac.new(secret, label, hashlib.sha256).digest()
         self.folder = folder
+        self.database = database
+        self.tasks = tasks  # TaskBook
         self.cipher = Fernet(base64.urlsafe_b64encode(derive(b"encrypt")))
         self.index_key = derive(b"index")
         self.catalog = catalog
@@ -213,6 +216,84 @@ class AccountStore:
             record["avatar"] = clean_avatar(avatar, self.catalog, record.get("owned", []))
             self._save(account_id, record)
             return self.public(record)
+
+    # ------------------------------------------------------------ results and tasks
+
+    def _results_path(self, topic, account_id):
+        return os.path.join(self.database, *topic.split("/"), RESULTS_FOLDER, account_id + ".json")
+
+    def _load_runs(self, topic, account_id):
+        try:
+            with open(self._results_path(topic, account_id), encoding="ascii") as f:
+                data = json.loads(self.cipher.decrypt(f.read().encode("ascii")))
+        except (OSError, ValueError, InvalidToken):
+            return []
+        return data.get("runs", []) if isinstance(data, dict) else []
+
+    def _save_runs(self, topic, account_id, runs):
+        path = self._results_path(topic, account_id)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        temp = path + ".tmp"
+        with open(temp, "w", encoding="ascii") as f:
+            f.write(self._encrypt({"version": RESULTS_VERSION, "runs": runs[-MAX_RUNS:]}))
+        os.replace(temp, path)
+
+    def _task_runs(self, account_id, tasks):
+        """Runs for every topic the tasks look at: {topic: runs}"""
+        topics = {task["condition"]["topic"] for task in tasks}
+        return {topic: self._load_runs(topic, account_id) for topic in topics}
+
+    def record_run(self, account_id, run):
+        """Save a test result, then give the reward of every task it completes.
+        Returns (public user data, tasks completed now)."""
+        with self.write_lock:
+            record = self._load(account_id)
+            if not record:
+                raise AccountError("not_logged_in")
+            runs = self._load_runs(run["topic"], account_id) + [run]
+            self._save_runs(run["topic"], account_id, runs)
+
+            done = {entry["id"] for entry in record.get("tasks", [])}
+            open_tasks = [task for task in (self.tasks.all() if self.tasks else []) if task["id"] not in done]
+            by_topic = self._task_runs(account_id, open_tasks)
+            finished = []
+            for task in open_tasks:
+                current, needed = progress(task, by_topic[task["condition"]["topic"]])
+                if current >= needed:
+                    finished.append(task)
+            if finished:
+                owned = record.setdefault("owned", [])
+                record["coins"] = record.get("coins", STARTING_COINS)
+                for task in finished:
+                    record["coins"] += task["reward"]["coins"]
+                    owned.extend(item for item in task["reward"]["items"] if item not in owned)
+                    record.setdefault("tasks", []).append({"id": task["id"], "at": run["at"]})
+                self._save(account_id, record)
+            return self.public(record), finished
+
+    def task_list(self, account_id):
+        """Every task with the user's progress. A finished task whose definition was removed
+        is still listed, by its id."""
+        record = self._load(account_id)
+        if not record:
+            raise AccountError("not_logged_in")
+        tasks = self.tasks.all() if self.tasks else []
+        done = {entry["id"]: entry["at"] for entry in record.get("tasks", [])}
+        by_topic = self._task_runs(account_id, [task for task in tasks if task["id"] not in done])
+        known = {task["id"] for task in tasks}
+        out = []
+        for task in tasks:
+            item = {"id": task["id"], "name": task["name"], "description": task["description"],
+                    "reward": task["reward"], "topic": task["condition"]["topic"]}
+            if task["id"] in done:
+                item["done_at"] = done[task["id"]]
+            else:
+                current, needed = progress(task, by_topic[task["condition"]["topic"]])
+                item["progress"] = [min(current, needed), needed]
+            out.append(item)
+        out += [{"id": task_id, "name": task_id, "done_at": at, "reward": None}
+                for task_id, at in done.items() if task_id not in known]
+        return out
 
     def buy(self, account_id, item_id):
         """Spend coins on a shop item. The price always comes from the server's catalog."""

@@ -92,6 +92,9 @@ export default {
             <p v-if="c.intro">{{ c.intro }}</p>
           </div>
         </div>
+        <div v-if="!sub" class="topic-links">
+          <RouterLink class="btn" :to="'/topics/' + slug + '/tasks'">☑ {{ t('tasks.topicTitle') }}</RouterLink>
+        </div>
         <div v-if="subtopics.length" class="grid subtopics">
           <TopicCard v-for="s in subtopics" :key="s.slug" :topic="s" />
         </div>

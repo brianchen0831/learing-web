@@ -3,8 +3,9 @@ import FillBlankTest, { canAsk } from './FillBlankTest.js';
 import HangmanTest, { canAsk as canPlayHangman } from './HangmanTest.js';
 import WordListChecklist from './WordListChecklist.js';
 import { getWordList, getWordLists } from '../api.js';
-import { t } from '../i18n.js';
+import { pick, t } from '../i18n.js';
 import { saveScore } from '../store.js';
+import { reportResult, user } from '../account/auth.js';
 import { buildTree } from '../wordlistTree.js';
 
 // Add new test types here. `canAsk` says whether a word can be used by that type,
@@ -44,6 +45,8 @@ export default {
     const words = ref(null);
     const noWords = ref(false);
     const result = ref(null);
+    const completedTasks = ref([]);
+    let run = null; // the lists and type of the test in progress, for the result report
 
     const usable = computed(() => lists.value.filter((l) => !l.invalid));
     const tree = computed(() => buildTree(usable.value));
@@ -83,23 +86,35 @@ export default {
           const key = w.word.trim().toLowerCase();
           if (activeType.value.canAsk(w.word) && !unique.has(key)) unique.set(key, w);
         });
-        if (unique.size) words.value = shuffled([...unique.values()]).slice(0, questionLimit.value);
-        else noWords.value = true;
+        if (unique.size) {
+          words.value = shuffled([...unique.values()]).slice(0, questionLimit.value);
+          run = { test: typeId.value, lists: [...selected.value], total: words.value.length };
+          completedTasks.value = [];
+        } else {
+          noWords.value = true;
+        }
       } catch {
         failed.value = true;
       }
     }
 
-    function finish(summary) {
+    async function finish(summary) {
       words.value = null;
-      if (summary.answered) {
-        result.value = summary;
-        saveScore(props.slug, `${summary.score}/${summary.answered}`);
+      if (!summary.answered) return;
+      result.value = summary;
+      saveScore(props.slug, `${summary.score}/${summary.answered}`);
+      // Logged-in users have the result saved in their account, which may complete tasks
+      if (user.value && run) {
+        try {
+          completedTasks.value = await reportResult({
+            topic: props.slug, ...run, answered: summary.answered, correct: summary.score,
+          });
+        } catch {}
       }
     }
 
     return {
-      tree, usable, loaded, failed, selected, typeId, pictures, count, customCount, words, noWords, result,
+      tree, usable, loaded, failed, selected, typeId, pictures, count, customCount, words, noWords, result, completedTasks, pick,
       activeType, canStart, types: TEST_TYPES, counts: QUESTION_COUNTS, selectAll, clearAll, toggle, start, finish, t,
     };
   },
@@ -110,6 +125,13 @@ export default {
                  v-bind="activeType.pictures ? { pictures } : {}" @finish="finish" />
       <form v-else-if="loaded" novalidate @submit.prevent="start">
         <p v-if="result" class="test-result" role="status">{{ t('test.result') }}: {{ result.score }}/{{ result.answered }}</p>
+        <div v-if="completedTasks.length" class="task-done" role="status">
+          <p v-for="task in completedTasks" :key="task.id">
+            🏆 {{ t('tasks.justDone') }} <strong>{{ pick(task.name) }}</strong>
+            <span v-if="task.reward.coins">&nbsp;+{{ task.reward.coins }} {{ t('shop.coinUnit') }}</span>
+          </p>
+          <RouterLink to="/account/tasks">{{ t('tasks.see') }}</RouterLink>
+        </div>
         <p v-if="!usable.length">{{ t('test.noLists') }}</p>
         <template v-else>
           <fieldset class="test-group">

@@ -1,0 +1,40 @@
+{
+  "tasks": [
+    {
+      "id": "first-quiz",
+      "name": { "en": "First quiz", "zh": "第一次測驗" },
+      "description": { "en": "Finish any vocabulary test with at least 5 questions.", "zh": "完成任一場至少 5 題的單字測驗。" },
+      "reward": { "coins": 20 },
+      "condition": { "type": "quiz", "topic": "english/quiz", "result": "completed", "count": 1, "min_questions": 5 }
+    },
+    {
+      "id": "sb-g1-part1-perfect-3",
+      "name": { "en": "Part 1 master", "zh": "第一部分達人" },
+      "description": { "en": "Get every word right in a fill-in-the-blank test on Spelling Bee Grade 1 part 1, 3 times, with at least 20 questions.", "zh": "在「Spelling Bee 一年級 第一部分」的填空測驗中全部答對 3 次，每次至少 20 題。" },
+      "reward": { "coins": 100 },
+      "condition": {
+        "type": "quiz", "topic": "english/quiz", "test": "fill-blank",
+        "list": "spelling-bee/spelling-bee-grade1-part1",
+        "result": "perfect", "count": 3, "min_questions": 20
+      }
+    },
+    {
+      "id": "sb-folder-10-tests",
+      "name": { "en": "Spelling Bee practice", "zh": "拼字練習家" },
+      "description": { "en": "Finish 10 tests that use only Spelling Bee lists, each with at least 10 questions.", "zh": "完成 10 場只使用 Spelling Bee 單字表的測驗，每場至少 10 題。" },
+      "reward": { "coins": 150 },
+      "condition": {
+        "type": "quiz", "topic": "english/quiz", "test": "any",
+        "folder": "spelling-bee",
+        "result": "completed", "count": 10, "min_questions": 10
+      }
+    },
+    {
+      "id": "hangman-perfect",
+      "name": { "en": "Hangman hero", "zh": "猜單字高手" },
+      "description": { "en": "Win every round of a hangman game with at least 10 words.", "zh": "在至少 10 題的猜單字遊戲中全部猜對。" },
+      "reward": { "coins": 80 },
+      "condition": { "type": "quiz", "topic": "english/quiz", "test": "hangman", "result": "perfect", "count": 1, "min_questions": 10 }
+    }
+  ]
+}

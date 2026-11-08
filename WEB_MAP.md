@@ -45,6 +45,8 @@ learning-web/
 | `/login`, `/register` | Log in, or create an account with an avatar |
 | `/account` | The user page, with the full-body avatar |
 | `/account/avatar` | Customize the avatar |
+| `/topics/<topic>/tasks` | A topic's tasks: open ones first, completed ones after in gray |
+| `/account/tasks` | Tasks and rewards: completed tasks and progress on open ones |
 | `/account/shop` | Dressing room: try on and buy clothes and decorations |
 
 ## Topics 主題
@@ -68,6 +70,12 @@ learning-web/
 Users can create an account, log in and log out, customize their avatar, and buy clothes and decorations with coins in an SVG paper-doll dressing room. The top right shows their head icon, and the user page shows the full-body avatar. Accounts are encrypted in the database. Details are in [account/DESIGN.md](account/DESIGN.md).
 
 使用者可以建立帳號、登入與登出、自訂角色，並在 SVG 紙娃娃試衣間用金幣購買服裝與裝飾。右上角顯示頭像，使用者頁面顯示全身角色。帳號資料在資料庫中加密保存。
+
+## Tasks and rewards 任務與獎勵
+
+Tasks are defined in `.json` files in each top-level topic's task folder, such as `database/english/task/`, one file per kind of task. Test results of logged-in users are saved per topic, such as `database/english/quiz/results/`, and a task pays its reward once its condition is met. Details are in [account/DESIGN.md](account/DESIGN.md).
+
+任務定義在各主題的任務資料夾，例如 `database/english/task/`，不同種類的任務可放在不同檔案。登入使用者的測驗結果依主題分開儲存，達成條件後即發放獎勵。
 
 ## Design rules 設計原則
 

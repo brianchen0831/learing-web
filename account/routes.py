@@ -1,6 +1,7 @@
 """The /api/account/ requests. Mixed into the server's request handler."""
 from http.cookies import CookieError, SimpleCookie
 
+from .rewards import RewardError, clean_run
 from .store import SESSION_SECONDS, AccountError
 
 ACTIONS = {
@@ -9,6 +10,7 @@ ACTIONS = {
     "/api/account/logout": "account_logout",
     "/api/account/avatar": "account_avatar",
     "/api/account/buy": "account_buy",
+    "/api/account/results": "account_results",
 }
 
 
@@ -64,6 +66,25 @@ class AccountRoutes:
         account_id = self.logged_in_account()
         if account_id:
             self.send_json({"user": self.accounts.buy(account_id, data.get("item"))})
+
+    def account_results(self, data):
+        """A finished test. The server mixes in quiz_source() and words_in()."""
+        account_id = self.logged_in_account()
+        if not account_id:
+            return
+        try:
+            run = clean_run(data, self.quiz_source, self.words_in)
+        except RewardError as error:
+            self.send_json({"error": str(error)}, 400)
+            return
+        user, finished = self.accounts.record_run(account_id, run)
+        self.send_json({"user": user, "completed": [
+            {"id": task["id"], "name": task["name"], "reward": task["reward"]} for task in finished]})
+
+    def account_tasks(self):
+        account_id = self.logged_in_account()
+        if account_id:
+            self.send_json({"tasks": self.accounts.task_list(account_id)})
 
     def handle_account_post(self, path):
         data = self.read_request()

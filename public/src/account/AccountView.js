@@ -25,6 +25,7 @@ export default {
           <div class="account-actions">
             <RouterLink class="btn" to="/account/avatar">{{ t('avatar.customize') }}</RouterLink>
             <RouterLink class="btn" to="/account/shop">{{ t('shop.title') }}</RouterLink>
+            <RouterLink class="btn" to="/account/tasks">{{ t('tasks.title') }}</RouterLink>
           </div>
         </div>
       </section>
