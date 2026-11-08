@@ -63,7 +63,8 @@ def clean_avatar(avatar, catalog, owned):
     if not isinstance(avatar, dict):
         raise AccountError("invalid_avatar")
     gender, skin = avatar.get("gender"), avatar.get("skin")
-    if gender not in catalog.genders or skin not in catalog.skins:
+    hair_color = avatar.get("hair_color") or catalog.hair_colors[0]
+    if gender not in catalog.genders or skin not in catalog.skins or hair_color not in catalog.hair_colors:
         raise AccountError("invalid_avatar")
     given = avatar.get("parts") or {}
     if not isinstance(given, dict):
@@ -87,7 +88,55 @@ def clean_avatar(avatar, catalog, owned):
         parts[layer] = part_id
     if any(layer not in parts for layer in catalog.required):
         raise AccountError("invalid_avatar")
-    return {"version": AVATAR_VERSION, "gender": gender, "skin": skin, "parts": parts}
+    cleaned = {"version": AVATAR_VERSION, "gender": gender, "skin": skin, "hair_color": hair_color, "parts": parts}
+    adjust = clean_adjust(avatar.get("adjust"), parts)
+    if adjust:
+        cleaned["adjust"] = adjust
+    order = clean_order(avatar.get("order"), catalog)
+    if order:
+        cleaned["order"] = order
+    return cleaned
+
+
+def clean_order(order, catalog):
+    """Drawing order chosen on the arrange page, back to front: a list of layer ids, each once,
+    the body included. Layers left out are drawn where the catalog puts them. The catalog's own
+    order is dropped, so only a changed order is saved."""
+    if order is None:
+        return []
+    if (not isinstance(order, list) or len(order) > len(catalog.layers)
+            or any(layer not in catalog.layers for layer in order) or len(set(order)) != len(order)):
+        raise AccountError("invalid_avatar")
+    if order == [layer for layer in catalog.layers if layer in order]:
+        return []
+    return order
+
+
+# Limits for moving and resizing a layer on the arrange page, in canvas pixels (720 x 1272)
+ADJUST_LIMITS = {"x": (-720, 720), "y": (-1272, 1272), "s": (0.25, 4), "cx": (0, 720), "cy": (0, 1272)}
+
+
+def clean_adjust(adjust, parts):
+    """Per-layer placement: {layer: {"x", "y", "s", "cx", "cy"}}, a move by (x, y) and a resize
+    by s around the point (cx, cy). Only layers being worn can be adjusted; the body cannot.
+    A placement that changes nothing is dropped."""
+    if adjust is None:
+        return {}
+    if not isinstance(adjust, dict) or len(adjust) > len(parts):
+        raise AccountError("invalid_avatar")
+    out = {}
+    for layer, value in adjust.items():
+        if layer not in parts or not isinstance(value, dict) or set(value) != set(ADJUST_LIMITS):
+            raise AccountError("invalid_avatar")
+        item = {}
+        for key, (low, high) in ADJUST_LIMITS.items():
+            number = value[key]
+            if isinstance(number, bool) or not isinstance(number, (int, float)) or not low <= number <= high:
+                raise AccountError("invalid_avatar")
+            item[key] = round(float(number), 3 if key == "s" else 1)
+        if item["x"] or item["y"] or item["s"] != 1:
+            out[layer] = item
+    return out
 
 
 class AccountStore:

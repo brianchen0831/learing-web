@@ -45,9 +45,12 @@ learning-web/
 | `/login`, `/register` | Log in, or create an account with an avatar |
 | `/account` | The user page, with the full-body avatar |
 | `/account/avatar` | Customize the avatar |
+| `/account/arrange` | Arrange the avatar: drag and resize each part on a canvas |
 | `/topics/<topic>/tasks` | A topic's tasks: open ones first, completed ones after in gray |
 | `/account/tasks` | Tasks and rewards: completed tasks and progress on open ones |
-| `/account/shop` | Dressing room: try on and buy clothes and decorations |
+| `/account/shop` | Dressing room: try on and buy clothes, shoes and accessories |
+| `/account/hair` | Hair salon: try on and buy hair styles |
+| `/account/beauty` | Beauty salon: try on and buy eyes, noses, mouths and makeup |
 
 ## Topics 主題
 
@@ -67,9 +70,9 @@ learning-web/
 
 ## Accounts 帳號
 
-Users can create an account, log in and log out, customize their avatar, and buy clothes and decorations with coins in an SVG paper-doll dressing room. The top right shows their head icon, and the user page shows the full-body avatar. Accounts are encrypted in the database. Details are in [account/DESIGN.md](account/DESIGN.md).
+Users can create an account, log in and log out, customize their paper-doll avatar, and spend coins in three shops: the dressing room (clothes), hair salon (hair) and beauty salon (face). The top right shows their head icon, and the user page shows the full-body avatar. Accounts are encrypted in the database. Details are in [account/DESIGN.md](account/DESIGN.md).
 
-使用者可以建立帳號、登入與登出、自訂角色，並在 SVG 紙娃娃試衣間用金幣購買服裝與裝飾。右上角顯示頭像，使用者頁面顯示全身角色。帳號資料在資料庫中加密保存。
+使用者可以建立帳號、登入與登出、自訂紙娃娃角色，並在三間商店用金幣購物：試衣間（服裝）、髮廊（髮型）和美容院（臉部）。右上角顯示頭像，使用者頁面顯示全身角色。帳號資料在資料庫中加密保存。
 
 ## Tasks and rewards 任務與獎勵
 

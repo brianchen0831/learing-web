@@ -2,6 +2,7 @@ import { reactive, ref, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 import AvatarPicker from './AvatarPicker.js';
 import { saveAvatar, user } from './auth.js';
+import { keepAdjust } from './doll.js';
 import { t } from '../i18n.js';
 
 // Avatar customization page. Only reachable when logged in.
@@ -22,7 +23,7 @@ export default {
       busy.value = true;
       error.value = '';
       try {
-        await saveAvatar(draft);
+        await saveAvatar({ ...draft, adjust: keepAdjust(draft, user.value.avatar.parts) });
         router.push('/account');
       } catch (e) {
         error.value = t('auth.error.' + e.message);
@@ -40,6 +41,7 @@ export default {
         <AvatarPicker :avatar="draft" />
         <p v-if="error" class="wrong" role="alert">{{ error }}</p>
         <div class="dialog-actions">
+          <RouterLink class="btn" to="/account/arrange">{{ t('arrange.title') }}</RouterLink>
           <RouterLink class="btn" to="/account">{{ t('dialog.cancel') }}</RouterLink>
           <button type="button" class="btn btn-primary" :disabled="busy" @click="save">{{ t('avatar.save') }}</button>
         </div>

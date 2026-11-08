@@ -22,9 +22,12 @@ All account code is in two folders:
 | --- | ---- |
 | `/register` | Name, password and avatar |
 | `/login` | Name and password |
-| `/account` | Full-body avatar, name and **Customize avatar**. Needs a login. |
+| `/account` | Full-body avatar, name, coins, **Customize avatar**, **Tasks and rewards**, and a photo card for each shop. Needs a login. |
 | `/account/avatar` | The avatar customizer. Needs a login. |
-| `/account/shop` | The dressing room and shop. Needs a login. |
+| `/account/arrange` | Arrange the avatar: move and resize each part. Needs a login. |
+| `/account/shop` | Dressing room 試衣間: clothes, shoes and accessories. Needs a login. |
+| `/account/hair` | Hair salon 髮廊: hair styles. Needs a login. |
+| `/account/beauty` | Beauty salon 美容院: eyes, nose, mouth and makeup. Needs a login. |
 
 The top right shows **Log in**, or the head icon, name and **Log out**. On wide screens, the home page sidebar shows the full-body avatar with the name, coins and a link to the dressing room, or a login hint when logged out. Names are 1–30 characters and do not depend on capital letters: `Amy` and `amy` are the same account. Passwords are 6–128 characters.
 
@@ -86,13 +89,15 @@ Everything about the doll is in `public/assets/avatars/doll/parts.json`, read by
 | --- | ------- |
 | `genders` | `male` and `female`. Each has its own body and its own parts. |
 | `skins` | Skin colors. |
-| `layers` | Layer order, back to front. `required` layers can be swapped but never removed. |
+| `layers` | Layer order, back to front. `required` layers can be swapped but never removed. `shop` says which shop sells the layer: `clothes`, `hair` or `beauty`. |
+| `hairColors` | Free hair colors: black, brunette, red, blonde, grey. Each has four `stops`, from outline to highlight. |
 | `head` | The head-icon crop for each gender. |
 | `parts` | Every part: `id`, `layer`, `price`, `label`, `files` (one per gender it fits), and `default` or `view`. |
 
 Layer order 圖層順序: background, back, body, socks, shoes, lower, upper, makeup, eyes, nose, mouth, hair, accessory, foreground, pet.
 
 - **Skin color:** the body image is light gray, and the skin color is multiplied over it.
+- **Hair color:** every hair image is gray, stretched so its outline is black and its highlights white. The site colors it with a gradient map (SVG `feComponentTransfer`) through the chosen color's `stops`, so every style comes in every color. The avatar saves it as `hair_color`; an avatar without one uses the first color. The server refuses a color that is not in the catalog.
 - **Required layers:** upper, lower, eyes, nose, mouth and hair. Upper and lower can never be empty, because the body's underwear would be colored as skin.
 - **Defaults:** simple eyes, nose and mouth, very short black hair, a white vest and white shorts, and bare feet. These are the parts marked `default`.
 - **Price 0** parts are free choices in the customizer. Parts **above 0** are sold in the dressing room.
@@ -100,7 +105,8 @@ Layer order 圖層順序: background, back, body, socks, shoes, lower, upper, ma
 An avatar is saved as:
 
 ```json
-{ "version": 2, "gender": "female", "skin": "warm",
+{ "version": 2, "gender": "female", "skin": "warm", "hair_color": "black",
+  "adjust": { "hair": { "x": 12, "y": -4, "s": 1.1, "cx": 361, "cy": 145 } },
   "parts": { "eyes": "eyes-simple", "nose": "nose-simple", "mouth": "mouth-smile",
              "hair": "hair-short-black", "upper": "vest-white", "lower": "shorts-white" } }
 ```
@@ -108,7 +114,23 @@ An avatar is saved as:
 ### Pages 頁面
 
 - **Register and customize** (`AvatarPicker.js`): boy or girl, skin color, and any layer with more than one free or owned part. Changing gender starts again from that body's defaults.
-- **Dressing room** (`/account/shop`): one tab per layer that has something for sale for the user's body. Trying on is free. Taking a part off a required layer puts back the default. **Take off all** returns to the defaults.
+- **Arrange** (`ArrangeView.js`, `/account/arrange`, linked from My account and the customizer): the avatar on a canvas. Clicking the drawing picks the top-most part under the pointer (it reads each image's transparency, so empty areas do not count), or a part can be picked from the **Layers** list. Drag to move; drag the round handle, use the **Size** slider (25–400%) or scroll to resize; arrow keys move and + / − resize. **Put this part back** and **Put all back** undo placements (**Put all back** also restores the layer order). The body cannot be moved.
+
+  **Layer order:** the **Layers** list runs from front (top) to back, the body included. **Move up a layer** / **Move down a layer** (or Page Up / Page Down) move the selected layer past the next drawn one, so a part can go in front of or behind any other, even behind the body (such as long hair behind the shoulders). The order is saved as `"order": [<layer ids, back to front>]`, only when it differs from the catalog's. The server accepts known layers, each once. Layers missing from a saved order (such as ones added to the catalog later) are drawn after the layer before them in the catalog (`orderOf` in `doll.js`). From a shop:
+
+  - **Arrange** (in the shop, before buying) opens this page with the look being tried on (`?draft=1&back=`, the look handed over in memory by `draft.js`). Nothing is saved here: **Done** takes the look, with its placements, back to the shop, where items can be bought and the look saved. **Cancel** goes back unchanged.
+  - **Buying** puts the item on and saves the look. If the item was already arranged, its placement is kept and the shop stays open. Otherwise this page opens with the item picked (`?layer=&back=&bought=`), and **Save** and **Cancel** return to the shop.
+
+  A placement is saved in the avatar as `"adjust": { "<layer>": { "x", "y", "s", "cx", "cy" } }`: moved by (x, y) canvas pixels and resized by s around (cx, cy), the middle of the part's drawing. It shows everywhere the avatar is drawn, the head icon too. It belongs to the part: swapping in another part on that layer (in a shop or the customizer) puts the layer back in place. The server accepts placements only for worn layers, with x within ±720, y within ±1272, s 0.25–4 and (cx, cy) on the canvas (`clean_adjust` in `store.py`).
+- **Shops** (`ShopView.js`, one page for all three): each shop sells the layers whose `shop` names it.
+
+  | Shop | URL | Layers | Photo |
+  | ---- | --- | ------ | ----- |
+  | Dressing room 試衣間 | `/account/shop` | background, back, socks, shoes, lower, upper, accessory, foreground, pet | `public/assets/images/shops/clothes.jpg` |
+  | Hair salon 髮廊 | `/account/hair` | hair | `public/assets/images/shops/hair.jpg` |
+  | Beauty salon 美容院 | `/account/beauty` | makeup, eyes, nose, mouth | `public/assets/images/shops/beauty.jpg` |
+
+  The hair salon also has free **Hair color** swatches above the styles; the style thumbnails show the chosen color, and **Back to default** also puts back black. A shop has a photo banner, links to the other two shops, and one tab per layer that has something for sale for the user's body. Trying on is free, and try-ons carry over when moving to another shop until the page is left. Taking a part off a required layer puts back the default. **Take off all** (dressing room) or **Back to default** (salons) puts back the defaults for that shop's layers only. The photos are free Pexels photos, shown at 80% saturation like the other site photos.
 
 ### Rules on the server 伺服器規則
 
@@ -140,6 +162,31 @@ The defaults were cut from the generated images in `account/avatar-art/`. The pa
 The female eyes, nose, mouth and hair come from `hair-style/hair-simpe-female-01.jpg`, and the brown pixie cut from `hair-simple-female-02.jpg`. Their heads are smaller than the template's, so the head was placed on its own: the ears were lined up and the image scaled to 110%. The nose and lips keep only how much darker they are than the drawn skin, so they suit every skin color.
 
 Known flaws: faint brown pocket stitching on the shorts, a tiny skin-colored mark at the female body's left waist, and a faint light line under the female brows on the darkest skin.
+
+### Female hair styles 女生髮型
+
+Seven styles come from the hair-only drawings in `hair-style/`:
+
+| Part | Source | Price |
+| ---- | ------ | ----- |
+| `hair-wavy-short` 波浪短髮 | `hair-wavy-female-04.jpg` | 60 |
+| `hair-wavy-medium` 中長波浪髮 | `hair-wavy-female-01.jpg` | 80 |
+| `hair-wavy-full` 豐盈波浪髮 | `hair-wavy-female-03.jpg` | 80 |
+| `hair-wavy-long` 長波浪髮 | `hair-wavy-female-02.jpg` | 100 |
+| `hair-curls-short` 短捲髮 | `hair-loose-curve-female-03.jpg` | 60 |
+| `hair-curls-medium` 中長捲髮 | `hair-loose-curve-female-02.jpg` | 80 |
+| `hair-curls-long` 長捲髮 | `hair-loose-curve-female-01.jpg` | 100 |
+
+The drawings share one head position. They were not drawn on `template-female.png` (their head is about 2.4 times bigger, with a longer, narrower face), but they keep their own shape: each is scaled evenly to 55%, with no warping, and placed with the top of the hair at the top of the doll's head. Users can move and resize it on the arrange page. The face and chin outlines in some drawings are removed. The older styles (very short, wavy, pixie) were turned gray the same way, so they keep their ids but lost the color in their names.
+
+### Female school uniform 女生制服
+
+The navy blazer with shirt and ribbon (upper, 80 coins), navy pleated skirt (lower, 60), white knee socks (socks, 30) and black school shoes (shoes, 50) are cut from one full-figure image, `examples/outfit-school-female-01.jpg`. Each piece is kept in its own folder: `upper-body/blazer-navy-female-01.jpg` (as fitted on the doll, same shape as on the avatar), `lower-body/skirt-pleated-navy-female-01.jpg` (with the rebuilt top), `socks/socks-knee-white-female-01.jpg` and `shoes/shoes-black-female-01.jpg` (as cut from the image). Because that figure's proportions differ from the template (longer legs, wider shoulders), the pieces were warped onto the body with a thin-plate spline through matching points (shoulders, sleeves, cuffs, skirt edges, knees, ankles, feet). Parts hidden in the image were rebuilt:
+
+- **Skirt top:** hidden by the blazer and its shadow, so the pleats were extended up to the waist. The skirt looks complete with the white vest.
+- **Socks:** warping left smudges and gaps, so the socks are drawn straight onto the doll's legs in the image's sock colors: white cloth from below the knee over the feet, a soft shadow on the inner side, and a gray outline. They look complete without shoes. The shoes are enlarged slightly so they cover the feet.
+
+Known flaws: with the blazer over the white shorts, a thin strip of skin shows in the blazer's opening under the shirt, and a sliver of arm can show under the left armpit.
 ## Tasks and rewards 任務與獎勵
 
 Users earn rewards by completing tasks. Each top-level topic page links to its own **Tasks** page at `/topics/<topic>/tasks` (`public/src/views/TopicTasksView.js`), listing the tasks whose condition uses that topic or a subtopic: open tasks first with progress, completed tasks after them in gray. Both task pages draw the list with `public/src/account/TaskList.js`. Main code: `account/rewards.py` (task format, conditions, result checks), `AccountStore.record_run` and `task_list` in `account/store.py`, and `public/src/account/TasksView.js` for the **Tasks and rewards** page at `/account/tasks`.

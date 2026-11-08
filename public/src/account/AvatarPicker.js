@@ -1,7 +1,7 @@
 import { computed, onMounted, watch } from 'vue';
 import UserAvatar from './UserAvatar.js';
 import { user } from './auth.js';
-import { defaultAvatar, doll, dollReady, partFile, partsFor } from './doll.js';
+import { defaultAvatar, doll, dollReady, keepAdjust, partFile, partsFor } from './doll.js';
 import { pick, t } from '../i18n.js';
 
 // Avatar customizer with a live full-body preview. The parent passes a reactive object,
@@ -38,11 +38,14 @@ export default {
         .filter((c) => c.parts.length > 1);
     });
 
-    return { doll, choices, partFile, pick, t };
+    // Placements from the arrange page stay only on parts that were not changed here
+    const preview = computed(() => ({ ...props.avatar, adjust: keepAdjust(props.avatar, user.value?.avatar?.parts) }));
+
+    return { doll, choices, preview, partFile, pick, t };
   },
   template: `
     <div v-if="doll && avatar.parts" class="avatar-picker">
-      <div class="avatar-preview"><UserAvatar :avatar="avatar" /></div>
+      <div class="avatar-preview"><UserAvatar :avatar="preview" /></div>
       <div>
         <fieldset class="avatar-part">
           <legend>{{ t('avatar.gender') }}</legend>

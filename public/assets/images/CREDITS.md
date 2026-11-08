@@ -5,3 +5,18 @@
   - License: Pexels License, https://www.pexels.com/license/
   - Source: https://www.pexels.com/photo/7156101/
   - Resized to 1920 px wide
+- **shops/clothes.jpg** - friends in casual clothes and sneakers on a rooftop (dressing room)
+  - Creator: cottonbro studio (Pexels)
+  - License: Pexels License, https://www.pexels.com/license/
+  - Source: https://www.pexels.com/photo/4880411/
+  - Resized to 1600 px wide
+- **shops/hair.jpg** - hairdresser's scissors and combs in a holster (hair salon)
+  - Creator: th2city (Pexels)
+  - License: Pexels License, https://www.pexels.com/license/
+  - Source: https://www.pexels.com/photo/36361319/
+  - Resized to 1600 px wide
+- **shops/beauty.jpg** - eyeshadow palette (beauty salon)
+  - Creator: Julia Kondratovskaya (Pexels)
+  - License: Pexels License, https://www.pexels.com/license/
+  - Source: https://www.pexels.com/photo/11672344/
+  - Cropped to the palette and resized to 1600 px wide
