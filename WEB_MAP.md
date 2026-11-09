@@ -84,6 +84,6 @@ Tasks are defined in `.json` files in each top-level topic's task folder, such a
 
 - **No build step**: Vue runs straight from `public/`.
 - **Topics are independent**: a topic's content, assets and design document live in its own folder; shared code lives in `src/` and `css/`.
-- **Components follow the topics**: `src/components/common/` holds the parts every page uses, and each topic's components sit under the same path as the topic, such as `src/components/english/vocabulary/` and `src/components/english/quiz/`. Each quiz type has its own folder named after its type id, such as `english/quiz/fill-blank/` and `english/quiz/hangman/`.
+- **Components follow the topics**: `src/components/common/` holds the parts every page uses, and each topic's components sit under the same path as the topic, such as `src/components/english/vocabulary/` and `src/components/english/quiz/`. Each quiz type has its own folder named after its type id, such as `english/quiz/fill-blank/`, `english/quiz/hangman/` and `english/quiz/listening/`.
 - **Local and safe**: the server only listens on this computer, and other websites cannot write to the database.
 - **Line endings**: LF everywhere.

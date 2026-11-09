@@ -266,7 +266,7 @@ Quiz condition 測驗條件:
 | ----- | ------- | ------- |
 | `type` | – | `quiz` |
 | `topic` | – | The quiz page, such as `english/quiz` |
-| `test` | `any` | `fill-blank`, `hangman` or `any` |
+| `test` | `any` | `fill-blank`, `hangman`, `listening` or `any` |
 | `list` | – | Only tests on exactly this list, such as `spelling-bee/spelling-bee-grade1-part1` |
 | `folder` | – | Only tests whose lists are all in this folder, such as `spelling-bee`. Use `list` or `folder`, or neither for any list. |
 | `result` | `completed` | `completed`: every question answered. `perfect`: completed with every answer right. |

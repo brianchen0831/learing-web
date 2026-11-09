@@ -1,6 +1,8 @@
 import { computed, onMounted, ref } from 'vue';
 import FillBlankTest, { canAsk } from './fill-blank/FillBlankTest.js';
 import HangmanTest, { canAsk as canPlayHangman } from './hangman/HangmanTest.js';
+import ListeningTest, { canAsk as canListen } from './listening/ListeningTest.js';
+import { canSpeak } from '../../../speech.js';
 import WordListChecklist from './WordListChecklist.js';
 import { getWordList, getWordLists } from '../../../api.js';
 import { pick, t } from '../../../i18n.js';
@@ -13,6 +15,8 @@ import { buildTree } from '../../../wordlistTree.js';
 const TEST_TYPES = [
   { id: 'fill-blank', label: 'test.type.fillBlank', component: FillBlankTest, canAsk, pictures: true },
   { id: 'hangman', label: 'test.type.hangman', component: HangmanTest, canAsk: canPlayHangman },
+  // Listening needs the browser's speech; the picture is shown only after answering
+  { id: 'listening', label: 'test.type.listening', component: ListeningTest, canAsk: canListen, pictures: true, picturesLabel: 'test.picturesAfter', available: canSpeak },
 ];
 const QUESTION_COUNTS = [10, 15, 20];
 
@@ -145,8 +149,9 @@ export default {
           <fieldset class="test-group">
             <legend>{{ t('test.type') }}</legend>
             <label v-for="type in types" :key="type.id" class="check">
-              <input v-model="typeId" type="radio" name="test-type" :value="type.id">
+              <input v-model="typeId" type="radio" name="test-type" :value="type.id" :disabled="type.available === false">
               {{ t(type.label) }}
+              <small v-if="type.available === false" class="intro">({{ t('test.noSpeech') }})</small>
             </label>
           </fieldset>
           <fieldset class="test-group">
@@ -170,7 +175,7 @@ export default {
           </fieldset>
           <label v-if="activeType.pictures" class="check">
             <input v-model="pictures" type="checkbox">
-            {{ t('test.pictures') }}
+            {{ t(activeType.picturesLabel || 'test.pictures') }}
           </label>
           <p v-if="noWords" class="wrong" role="alert">{{ t('test.noWords') }}</p>
           <button type="submit" class="btn btn-primary test-start" :disabled="!canStart">{{ t('test.start') }}</button>

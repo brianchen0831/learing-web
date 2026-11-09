@@ -22,7 +22,7 @@ RESULTS_FOLDER = "results"
 RESULTS_VERSION = 1
 MAX_RUNS = 2000  # oldest runs are dropped after this; finished tasks are kept in the account
 MAX_LISTS = 100
-QUIZ_TESTS = ("fill-blank", "hangman")
+QUIZ_TESTS = ("fill-blank", "hangman", "listening")
 RESULTS = ("completed", "perfect")
 
 

@@ -14,12 +14,13 @@ function englishVoice() {
   );
 }
 
-export function speak(text) {
+// `rate`: 1 is normal speed; lower is slower.
+export function speak(text, rate = 0.9) {
   if (!canSpeak) return;
   window.speechSynthesis.cancel(); // stop any word still being read
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'en-US';
-  utterance.rate = 0.9;
+  utterance.rate = rate;
   const voice = englishVoice();
   if (voice) utterance.voice = voice;
   window.speechSynthesis.speak(utterance);

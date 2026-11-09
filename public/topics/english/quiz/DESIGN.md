@@ -42,6 +42,16 @@ Main code is in `src/components/english/quiz/`, the same path as this topic: `Vo
 - A round scores a point if the word is finished. Otherwise the word is shown.
 - Words with fewer than two letters A–Z are left out.
 
+### Listening 聽寫
+
+`src/components/english/quiz/listening/ListeningTest.js` (type id `listening`)
+
+- Nothing about the word is shown. It is read aloud by the browser's speech engine when the question opens, and again with **Play the word** or more slowly with **Slowly** (`src/speech.js`, the same voice as the word lists' pronunciation button).
+- **Hear a sentence** reads one of the word's example sentences (from its meanings) aloud, so the word can be heard in context. Nothing is shown; each press reads the next sentence when there are several. After the answer is checked, the sentences are shown, each with a 🔊 button. The button is greyed out for a word with no example.
+- The student types the whole word in the box below. Capital letters, extra spaces and curly apostrophes do not matter.
+- Each question gets one try. Then the word, its Chinese meanings and a **Search Google Images** link are shown, and the picture if **Show a picture after each answer** is on. The picture is only requested then, so it cannot give the word away.
+- Words with no letter are left out. If the browser cannot read aloud, the type cannot be chosen.
+
 ### Adding a type 新增類型
 
 1. Create a folder named after the type id in `src/components/english/quiz/`, such as `spelling/`, with a component that takes `words` and emits `finish` with `{ score, answered }`.
