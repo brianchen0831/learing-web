@@ -68,7 +68,7 @@ export default {
     // Placements stay with their part; a swapped-in part starts in place (see toggle).
     const adjust = computed(() => {
       const out = {};
-      Object.entries(placed.value).forEach(([l, a]) => { if (worn.value[l]) out[l] = a; });
+      Object.entries(placed.value).forEach(([l, a]) => { if (l === 'body' || worn.value[l]) out[l] = a; });
       return out;
     });
     const preview = computed(() => ({ ...user.value.avatar, hair_color: hairColor.value, parts: worn.value, adjust: adjust.value }));

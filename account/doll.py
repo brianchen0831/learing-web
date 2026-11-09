@@ -19,6 +19,7 @@ class Catalog:
             data = json.load(f)
         self.genders = [g["id"] for g in data["genders"]]
         self.skins = [s["id"] for s in data["skins"]]
+        self.default_skin = next((s["id"] for s in data["skins"] if s.get("default")), self.skins[0])
         self.layers = [layer["id"] for layer in data["layers"]]
         self.required = [layer["id"] for layer in data["layers"] if layer.get("required")]
         self.parts = {part["id"]: part for part in data["parts"]}
@@ -36,7 +37,7 @@ class Catalog:
 
     def default_avatar(self, gender=None, skin=None):
         gender = gender if gender in self.genders else self.genders[0]
-        skin = skin if skin in self.skins else self.skins[0]
+        skin = skin if skin in self.skins else self.default_skin
         return {"version": AVATAR_VERSION, "gender": gender, "skin": skin,
                 "hair_color": self.hair_colors[0], "parts": self.default_parts(gender)}
 

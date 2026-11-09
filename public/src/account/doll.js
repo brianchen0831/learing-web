@@ -28,8 +28,9 @@ export function defaultParts(gender) {
 export function defaultAvatar(gender, skin) {
   const genders = doll.value.genders.map((g) => g.id);
   const skins = doll.value.skins.map((s) => s.id);
+  const fallback = doll.value.skins.find((s) => s.default)?.id || skins[0];
   const g = genders.includes(gender) ? gender : genders[0];
-  return { version: 2, gender: g, skin: skins.includes(skin) ? skin : skins[0], hair_color: hairColors()[0]?.id, parts: defaultParts(g) };
+  return { version: 2, gender: g, skin: skins.includes(skin) ? skin : fallback, hair_color: hairColors()[0]?.id, parts: defaultParts(g) };
 }
 
 // Hair layers are gray. A hair color is a gradient map: gray 0 (outline) to 1 (highlight)
@@ -82,7 +83,7 @@ export function transformOf(avatar, layer) {
 export function keepAdjust(avatar, beforeParts) {
   const adjust = {};
   Object.entries(avatar.adjust || {}).forEach(([layer, a]) => {
-    if (avatar.parts?.[layer] && avatar.parts[layer] === beforeParts?.[layer]) adjust[layer] = a;
+    if (layer === 'body' || (avatar.parts?.[layer] && avatar.parts[layer] === beforeParts?.[layer])) adjust[layer] = a;
   });
   return adjust;
 }

@@ -4,10 +4,17 @@
     { "id": "female", "label": { "en": "Girl", "zh": "女生" } }
   ],
   "skins": [
-    { "id": "light", "color": "#f8dcc4" },
+    { "id": "porcelain", "color": "#fdeee3" },
+    { "id": "light", "color": "#f8dcc4", "default": true },
+    { "id": "peach", "color": "#f6cfb0" },
     { "id": "warm", "color": "#eec39a" },
+    { "id": "golden", "color": "#e0ac78" },
+    { "id": "olive", "color": "#c9a27a" },
     { "id": "tan", "color": "#c98f62" },
-    { "id": "deep", "color": "#8a5a3c" }
+    { "id": "brown", "color": "#a8704a" },
+    { "id": "deep", "color": "#8a5a3c" },
+    { "id": "dark", "color": "#6b4329" },
+    { "id": "ebony", "color": "#4e3020" }
   ],
   "layers": [
     { "id": "background", "shop": "clothes", "label": { "en": "Background", "zh": "背景" } },

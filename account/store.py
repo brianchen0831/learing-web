@@ -118,15 +118,15 @@ ADJUST_LIMITS = {"x": (-720, 720), "y": (-1272, 1272), "s": (0.25, 4), "cx": (0,
 
 def clean_adjust(adjust, parts):
     """Per-layer placement: {layer: {"x", "y", "s", "cx", "cy"}}, a move by (x, y) and a resize
-    by s around the point (cx, cy). Only layers being worn can be adjusted; the body cannot.
+    by s around the point (cx, cy). Layers being worn and the body can be adjusted.
     A placement that changes nothing is dropped."""
     if adjust is None:
         return {}
-    if not isinstance(adjust, dict) or len(adjust) > len(parts):
+    if not isinstance(adjust, dict) or len(adjust) > len(parts) + 1:
         raise AccountError("invalid_avatar")
     out = {}
     for layer, value in adjust.items():
-        if layer not in parts or not isinstance(value, dict) or set(value) != set(ADJUST_LIMITS):
+        if (layer not in parts and layer != "body") or not isinstance(value, dict) or set(value) != set(ADJUST_LIMITS):
             raise AccountError("invalid_avatar")
         item = {}
         for key, (low, high) in ADJUST_LIMITS.items():

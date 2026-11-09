@@ -14,6 +14,7 @@ export default {
   props: {
     avatar: { type: Object, required: true },
     head: { type: Boolean, default: false }, // true: head icon; false: full body
+    view: { type: String, default: '' }, // a viewBox of its own, such as the arrange page's work area
   },
   setup(props) {
     const id = nextId++;
@@ -22,9 +23,9 @@ export default {
     const layers = computed(() => layersOf(props.avatar));
     const skin = computed(() => skinColor(props.avatar.skin));
     const hair = computed(() => hairTables(props.avatar.hair_color));
-    const viewBox = computed(() =>
-      props.head ? doll.value?.head[props.avatar.gender] || '250 60 220 220' : FULL_VIEW,
-    );
+    const viewBox = computed(() => props.view || (
+      props.head ? doll.value?.head[props.avatar.gender] || '250 60 220 220' : FULL_VIEW
+    ));
     function filterOf(layer) {
       if (layer === 'body') return `url(#${filterId})`;
       if (layer === 'hair' && hair.value) return `url(#${hairId})`;

@@ -15,6 +15,11 @@ const W = 720;
 const H = 1272;
 const LIMITS = { x: [-720, 720], y: [-1272, 1272], s: [0.25, 4] };
 const clamp = (v, [lo, hi]) => Math.min(hi, Math.max(lo, v));
+// The work area: larger than the avatar's frame (FULL_VIEW, outlined), so parts moved
+// beyond it can still be seen and picked up.
+const STAGE_VIEW = '-230 -130 1180 1530';
+const STAGE = STAGE_VIEW.split(' ').map(Number);
+const ZOOMS = [1, 1.5, 2, 3, 4];
 
 // Each part image's alpha channel, for clicking on the drawing itself rather than its
 // transparent box, and the box around what is drawn. Loaded once per image.
@@ -83,6 +88,37 @@ export default {
     // Everything drawn, back to front (the body too), and the parts that can be moved
     const drawn = computed(() => layersOf(draft));
     const layers = computed(() => drawn.value.filter((l) => l.layer !== 'body'));
+    // Moving or resizing the body takes every other part along, unless switched off
+    const follow = ref(true);
+
+    // Zoom: the work area seen through a smaller window, centred on (look.x, look.y).
+    // Dragging an empty spot pans when zoomed in.
+    const zoom = ref(1);
+    const look = reactive({ x: STAGE[0] + STAGE[2] / 2, y: STAGE[1] + STAGE[3] / 2 });
+    const view = computed(() => {
+      const w = STAGE[2] / zoom.value;
+      const h = STAGE[3] / zoom.value;
+      return [look.x - w / 2, look.y - h / 2, w, h];
+    });
+    const viewBox = computed(() => view.value.map((v) => Math.round(v * 10) / 10).join(' '));
+    function keepInside() {
+      const w = STAGE[2] / zoom.value;
+      const h = STAGE[3] / zoom.value;
+      look.x = clamp(look.x, [STAGE[0] + w / 2, STAGE[0] + STAGE[2] - w / 2]);
+      look.y = clamp(look.y, [STAGE[1] + h / 2, STAGE[1] + STAGE[3] - h / 2]);
+    }
+    function setZoom(z) {
+      zoom.value = z;
+      if (z === 1) {
+        look.x = STAGE[0] + STAGE[2] / 2;
+        look.y = STAGE[1] + STAGE[3] / 2;
+      } else if (selected.value && info[selected.value]) {
+        [look.x, look.y] = center(selected.value);
+      }
+      keepInside();
+    }
+    const zoomIn = () => setZoom(ZOOMS.find((z) => z > zoom.value) || zoom.value);
+    const zoomOut = () => setZoom([...ZOOMS].reverse().find((z) => z < zoom.value) || zoom.value);
     const label = (layer) => {
       if (layer === 'body') return t('arrange.body');
       const part = findPart(draft.parts[layer]);
@@ -91,13 +127,13 @@ export default {
 
     async function loadLayers() {
       await dollReady;
-      for (const l of layers.value) {
+      for (const l of drawn.value) {
         const m = await loadMask(l.url);
         if (m) info[l.layer] = m;
       }
     }
     onMounted(loadLayers);
-    watch(layers, loadLayers);
+    watch(drawn, loadLayers);
 
     // The placement of a layer, or the identity placement around its drawing's middle
     function place(layer) {
@@ -123,9 +159,34 @@ export default {
       return { x: x0, y: y0, w: x1 - x0, h: y1 - y0, hx: x1, hy: y1 };
     });
 
-    // The top-most part drawn under a canvas point
+    // Every change is a move by (x, y) and a resize by s around the canvas point (cx, cy),
+    // applied on top of where the layers were when the change started (`start`).
+    const center = (layer) => {
+      const a = place(layer);
+      return [a.cx + a.x, a.cy + a.y];
+    };
+    const group = (layer) => (layer === 'body' && follow.value ? drawn.value.map((l) => l.layer) : [layer]);
+    function snapshot(layer) {
+      const out = {};
+      group(layer).forEach((l) => { out[l] = { ...place(l) }; });
+      return out;
+    }
+    function apply(start, d) {
+      Object.entries(start).forEach(([layer, a]) => {
+        const s = clamp(a.s * d.s, LIMITS.s);
+        const k = s / a.s;
+        const e = edit(layer);
+        e.s = s;
+        e.x = clamp(k * (a.cx + a.x - d.cx) + d.cx + d.x - a.cx, LIMITS.x);
+        e.y = clamp(k * (a.cy + a.y - d.cy) + d.cy + d.y - a.cy, LIMITS.y);
+      });
+    }
+    const moveBy = (start, dx, dy) => apply(start, { x: dx, y: dy, s: 1, cx: 0, cy: 0 });
+    const scaleBy = (start, k, c) => apply(start, { x: 0, y: 0, s: k, cx: c[0], cy: c[1] });
+
+    // The top-most part drawn under a canvas point; the body last
     function hit(x, y) {
-      for (const l of [...layers.value].reverse()) {
+      for (const l of [...drawn.value].reverse()) {
         const m = info[l.layer];
         if (!m) continue;
         const [lx, ly] = toLayer(place(l.layer), x, y);
@@ -147,38 +208,42 @@ export default {
     function down(e) {
       const [x, y] = point(e);
       const f = frame.value;
-      if (f && Math.hypot(x - f.hx, y - f.hy) < 26) {
-        const a = edit(selected.value);
-        const c = [a.cx + a.x, a.cy + a.y];
-        action = { mode: 'size', a, s0: a.s, c, d0: Math.max(Math.hypot(x - c[0], y - c[1]), 1) };
+      if (f && Math.hypot(x - f.hx, y - f.hy) < 26 / zoom.value) {
+        const c = center(selected.value);
+        action = { mode: 'size', start: snapshot(selected.value), c, d0: Math.max(Math.hypot(x - c[0], y - c[1]), 1) };
       } else {
         const layer = hit(x, y);
-        selected.value = layer;
-        if (!layer) return;
-        const a = edit(layer);
-        action = { mode: 'move', a, x0: x, y0: y, ax: a.x, ay: a.y };
+        // An empty spot deselects; when zoomed in it pans instead and keeps the selection
+        if (layer || zoom.value === 1) selected.value = layer;
+        if (!layer) {
+          if (zoom.value === 1) return;
+          const r = stage.value.getBoundingClientRect();
+          action = { mode: 'pan', cx: e.clientX, cy: e.clientY, lx: look.x, ly: look.y, upp: Math.max(view.value[2] / r.width, view.value[3] / r.height) };
+        } else {
+          action = { mode: 'move', start: snapshot(layer), x0: x, y0: y };
+        }
       }
       e.currentTarget.setPointerCapture(e.pointerId);
       stage.value.focus();
     }
     function move(e) {
       if (!action) return;
-      const [x, y] = point(e);
-      const a = action.a;
-      if (action.mode === 'move') {
-        a.x = clamp(action.ax + x - action.x0, LIMITS.x);
-        a.y = clamp(action.ay + y - action.y0, LIMITS.y);
-      } else {
-        a.s = clamp(action.s0 * Math.hypot(x - action.c[0], y - action.c[1]) / action.d0, LIMITS.s);
+      if (action.mode === 'pan') {
+        look.x = action.lx - (e.clientX - action.cx) * action.upp;
+        look.y = action.ly - (e.clientY - action.cy) * action.upp;
+        keepInside();
+        return;
       }
+      const [x, y] = point(e);
+      if (action.mode === 'move') moveBy(action.start, x - action.x0, y - action.y0);
+      else scaleBy(action.start, Math.hypot(x - action.c[0], y - action.c[1]) / action.d0, action.c);
     }
     function up() {
       action = null;
     }
     function resize(factor) {
-      if (!selected.value || selected.value === 'body') return;
-      const a = edit(selected.value);
-      a.s = clamp(a.s * factor, LIMITS.s);
+      if (!selected.value) return;
+      scaleBy(snapshot(selected.value), factor, center(selected.value));
     }
     function wheel(e) {
       if (selected.value) resize(e.deltaY < 0 ? 1.05 : 1 / 1.05);
@@ -190,13 +255,10 @@ export default {
         e.preventDefault();
         return;
       }
-      if (selected.value === 'body') return;
       const step = e.shiftKey ? 10 : 2;
       const moves = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
       if (moves[e.key]) {
-        const a = edit(selected.value);
-        a.x = clamp(a.x + moves[e.key][0], LIMITS.x);
-        a.y = clamp(a.y + moves[e.key][1], LIMITS.y);
+        moveBy(snapshot(selected.value), moves[e.key][0], moves[e.key][1]);
       } else if (e.key === '+' || e.key === '=') {
         resize(1.05);
       } else if (e.key === '-' || e.key === '_') {
@@ -210,15 +272,17 @@ export default {
     const size = computed({
       get: () => Math.round((selected.value ? place(selected.value).s : 1) * 100),
       set: (v) => {
-        if (selected.value) edit(selected.value).s = clamp(v / 100, LIMITS.s);
+        if (selected.value) resize(clamp(v / 100, LIMITS.s) / place(selected.value).s);
       },
     });
     const moved = (layer) => {
       const a = draft.adjust[layer];
       return !!a && (Math.round(a.x) !== 0 || Math.round(a.y) !== 0 || Math.round(a.s * 100) !== 100);
     };
+    // Putting the body back, with parts following it, puts every part back with it
     function resetLayer() {
-      delete draft.adjust[selected.value];
+      if (selected.value === 'body' && follow.value) Object.keys(draft.adjust).forEach((k) => delete draft.adjust[k]);
+      else delete draft.adjust[selected.value];
     }
     function resetAll() {
       Object.keys(draft.adjust).forEach((k) => delete draft.adjust[k]);
@@ -278,7 +342,9 @@ export default {
 
     return {
       drawn, canUp, canDown, shift, reordered,
-      doll, draft, layers, selected, stage, frame, size, error, busy, viewBox: FULL_VIEW, backTo, bought, tryOn, pick,
+      follow, stageBox: STAGE_VIEW.split(' ').map(Number), shown: FULL_VIEW.split(' ').map(Number),
+      zoom, zoomIn, zoomOut, setZoom, maxZoom: ZOOMS[ZOOMS.length - 1],
+      doll, draft, layers, selected, stage, frame, size, error, busy, viewBox, backTo, bought, tryOn, pick,
       label, moved, down, move, up, wheel, key, resetLayer, resetAll, save, cancel, t,
     };
   },
@@ -292,17 +358,24 @@ export default {
       <div v-if="doll" class="arrange-layout">
         <div class="lesson arrange-stage-box">
           <div class="arrange-stage">
-            <UserAvatar :avatar="draft" />
+            <UserAvatar :avatar="draft" :view="viewBox" />
             <svg ref="stage" class="arrange-overlay" :viewBox="viewBox" tabindex="0" role="application"
                  :aria-label="t('arrange.title')"
                  @pointerdown="down" @pointermove="move" @pointerup="up" @pointercancel="up"
                  @wheel.prevent="wheel" @keydown="key">
-              <rect x="0" y="0" width="720" height="1272" fill="transparent"/>
+              <rect :x="stageBox[0]" :y="stageBox[1]" :width="stageBox[2]" :height="stageBox[3]" fill="transparent"/>
+              <rect :x="shown[0]" :y="shown[1]" :width="shown[2]" :height="shown[3]" class="arrange-shown"/>
+              <text :x="shown[0] + 8 / zoom" :y="shown[1] - 10 / zoom" class="arrange-shown-label" :style="{ fontSize: 28 / zoom + 'px' }">{{ t('arrange.shown') }}</text>
               <g v-if="frame">
                 <rect :x="frame.x" :y="frame.y" :width="frame.w" :height="frame.h" class="arrange-frame"/>
-                <circle :cx="frame.hx" :cy="frame.hy" r="14" class="arrange-handle"/>
+                <circle :cx="frame.hx" :cy="frame.hy" :r="14 / zoom" class="arrange-handle"/>
               </g>
             </svg>
+            <div class="arrange-zoom" role="group" :aria-label="t('arrange.zoom')">
+              <button type="button" class="btn" :disabled="zoom <= 1" :title="t('arrange.zoomOut')" :aria-label="t('arrange.zoomOut')" @click="zoomOut">−</button>
+              <button type="button" class="btn" :title="t('arrange.zoomReset')" @click="setZoom(1)">{{ Math.round(zoom * 100) }}%</button>
+              <button type="button" class="btn" :disabled="zoom >= maxZoom" :title="t('arrange.zoomIn')" :aria-label="t('arrange.zoomIn')" @click="zoomIn">+</button>
+            </div>
           </div>
         </div>
         <section class="lesson arrange-panel">
@@ -320,15 +393,17 @@ export default {
             <button type="button" class="btn" :disabled="!canUp" @click="shift(1)">▲ {{ t('arrange.up') }}</button>
             <button type="button" class="btn" :disabled="!canDown" @click="shift(-1)">▼ {{ t('arrange.down') }}</button>
           </div>
-          <template v-if="selected && selected !== 'body'">
+          <template v-if="selected">
+            <label v-if="selected === 'body'" class="arrange-follow">
+              <input v-model="follow" type="checkbox"> {{ t('arrange.follow') }}
+            </label>
             <label class="arrange-size">
               {{ t('arrange.size') }} <strong>{{ size }}%</strong>
               <input v-model.number="size" type="range" min="25" max="400" step="1">
             </label>
             <button type="button" class="btn" @click="resetLayer">{{ t('arrange.resetLayer') }}</button>
           </template>
-          <p v-else-if="!selected" class="intro">{{ t('arrange.pickHint') }}</p>
-          <p v-else class="intro">{{ t('arrange.bodyHint') }}</p>
+          <p v-else class="intro">{{ t('arrange.pickHint') }}</p>
           <p class="intro arrange-keys">{{ t('arrange.keys') }}</p>
           <p v-if="error" class="wrong" role="alert">{{ error }}</p>
           <div class="dialog-actions">

@@ -88,7 +88,7 @@ Everything about the doll is in `public/assets/avatars/doll/parts.json`, read by
 | Key | Meaning |
 | --- | ------- |
 | `genders` | `male` and `female`. Each has its own body and its own parts. |
-| `skins` | Skin colors. |
+| `skins` | Skin colors, lightest to darkest (11). The one marked `default` is used when none is chosen. |
 | `layers` | Layer order, back to front. `required` layers can be swapped but never removed. `shop` says which shop sells the layer: `clothes`, `hair` or `beauty`. |
 | `hairColors` | Free hair colors: black, brunette, red, blonde, grey. Each has four `stops`, from outline to highlight. |
 | `head` | The head-icon crop for each gender. |
@@ -114,14 +114,18 @@ An avatar is saved as:
 ### Pages 頁面
 
 - **Register and customize** (`AvatarPicker.js`): boy or girl, skin color, and any layer with more than one free or owned part. Changing gender starts again from that body's defaults.
-- **Arrange** (`ArrangeView.js`, `/account/arrange`, linked from My account and the customizer): the avatar on a canvas. Clicking the drawing picks the top-most part under the pointer (it reads each image's transparency, so empty areas do not count), or a part can be picked from the **Layers** list. Drag to move; drag the round handle, use the **Size** slider (25–400%) or scroll to resize; arrow keys move and + / − resize. **Put this part back** and **Put all back** undo placements (**Put all back** also restores the layer order). The body cannot be moved.
+- **Arrange** (`ArrangeView.js`, `/account/arrange`, linked from My account and the customizer): the avatar on a canvas. Clicking the drawing picks the top-most part under the pointer (it reads each image's transparency, so empty areas do not count), or a part can be picked from the **Layers** list. Drag to move; drag the round handle, use the **Size** slider (25–400%) or scroll to resize; arrow keys move and + / − resize. **Put this part back** and **Put all back** undo placements (**Put all back** also restores the layer order).
+
+  **Body:** it can be moved and resized like a part. With **Clothes and face move with the body** on (the default), every other part moves and resizes with it, so the avatar stays together; off, only the body changes. Putting the body back with that option on puts every part back.
+
+  **Work area:** the canvas is larger than the avatar's frame (`STAGE_VIEW`), so parts moved beyond it can still be seen and picked up. A dashed outline shows the frame that the avatar is shown in elsewhere; anything outside it is cut off there. The **− / % / +** buttons in the corner zoom the view (100%, 150%, 200%, 300%, 400%), centred on the selected part; the % button goes back to 100%. When zoomed in, dragging an empty spot pans the view and keeps the selection. Zoom only changes the view, not the avatar.
 
   **Layer order:** the **Layers** list runs from front (top) to back, the body included. **Move up a layer** / **Move down a layer** (or Page Up / Page Down) move the selected layer past the next drawn one, so a part can go in front of or behind any other, even behind the body (such as long hair behind the shoulders). The order is saved as `"order": [<layer ids, back to front>]`, only when it differs from the catalog's. The server accepts known layers, each once. Layers missing from a saved order (such as ones added to the catalog later) are drawn after the layer before them in the catalog (`orderOf` in `doll.js`). From a shop:
 
   - **Arrange** (in the shop, before buying) opens this page with the look being tried on (`?draft=1&back=`, the look handed over in memory by `draft.js`). Nothing is saved here: **Done** takes the look, with its placements, back to the shop, where items can be bought and the look saved. **Cancel** goes back unchanged.
   - **Buying** puts the item on and saves the look. If the item was already arranged, its placement is kept and the shop stays open. Otherwise this page opens with the item picked (`?layer=&back=&bought=`), and **Save** and **Cancel** return to the shop.
 
-  A placement is saved in the avatar as `"adjust": { "<layer>": { "x", "y", "s", "cx", "cy" } }`: moved by (x, y) canvas pixels and resized by s around (cx, cy), the middle of the part's drawing. It shows everywhere the avatar is drawn, the head icon too. It belongs to the part: swapping in another part on that layer (in a shop or the customizer) puts the layer back in place. The server accepts placements only for worn layers, with x within ±720, y within ±1272, s 0.25–4 and (cx, cy) on the canvas (`clean_adjust` in `store.py`).
+  A placement is saved in the avatar as `"adjust": { "<layer>": { "x", "y", "s", "cx", "cy" } }`: moved by (x, y) canvas pixels and resized by s around (cx, cy), the middle of the part's drawing. It shows everywhere the avatar is drawn, the head icon too. It belongs to the part: swapping in another part on that layer (in a shop or the customizer) puts the layer back in place. The server accepts placements only for worn layers and the body, with x within ±720, y within ±1272, s 0.25–4 and (cx, cy) on the canvas (`clean_adjust` in `store.py`).
 - **Shops** (`ShopView.js`, one page for all three): each shop sells the layers whose `shop` names it.
 
   | Shop | URL | Layers | Photo |
