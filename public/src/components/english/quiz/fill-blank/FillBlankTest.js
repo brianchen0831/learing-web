@@ -1,7 +1,7 @@
 import { computed, nextTick, onMounted, ref } from 'vue';
-import PictureHint from './PictureHint.js';
-import { googleImagesUrl } from '../api.js';
-import { t } from '../i18n.js';
+import PictureHint from '../PictureHint.js';
+import { googleImagesUrl } from '../../../../api.js';
+import { t } from '../../../../i18n.js';
 
 const LETTER = /[\p{L}\p{N}]/u;
 

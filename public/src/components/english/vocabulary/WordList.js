@@ -1,9 +1,9 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { getWordList, getWordLists } from '../api.js';
-import { pick, t } from '../i18n.js';
-import { canSpeak, speak } from '../speech.js';
-import { buildTree } from '../wordlistTree.js';
+import { getWordList, getWordLists } from '../../../api.js';
+import { pick, t } from '../../../i18n.js';
+import { canSpeak, speak } from '../../../speech.js';
+import { buildTree } from '../../../wordlistTree.js';
 import WordListTree from './WordListTree.js';
 
 const dictionaryUrl = (word) =>

@@ -1,6 +1,6 @@
 import { ref, watch } from 'vue';
-import { findPicture } from '../api.js';
-import { t } from '../i18n.js';
+import { findPicture } from '../../../api.js';
+import { t } from '../../../i18n.js';
 
 // Picture for a word, with its credit. Shows nothing if no picture is found.
 export default {

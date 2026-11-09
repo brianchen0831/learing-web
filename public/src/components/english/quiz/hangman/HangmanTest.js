@@ -1,7 +1,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import PictureHint from './PictureHint.js';
-import { googleImagesUrl } from '../api.js';
-import { t } from '../i18n.js';
+import PictureHint from '../PictureHint.js';
+import { googleImagesUrl } from '../../../../api.js';
+import { t } from '../../../../i18n.js';
 
 const MAX_WRONG = 6;
 const ALPHABET = [...'abcdefghijklmnopqrstuvwxyz'];

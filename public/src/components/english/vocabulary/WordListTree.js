@@ -1,4 +1,4 @@
-import { listsIn } from '../wordlistTree.js';
+import { listsIn } from '../../../wordlistTree.js';
 
 // Folder view of word lists for the Vocabulary sidebar. The folder holding the
 // selected list opens by itself; others open with a click.

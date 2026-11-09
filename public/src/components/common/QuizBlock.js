@@ -1,6 +1,6 @@
 import { reactive, ref } from 'vue';
-import { t } from '../i18n.js';
-import { saveScore } from '../store.js';
+import { t } from '../../i18n.js';
+import { saveScore } from '../../store.js';
 
 // questions: [{ q, options: [], answer: <index> }]
 export default {

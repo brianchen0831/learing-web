@@ -1,12 +1,12 @@
 import { computed, onMounted, ref } from 'vue';
-import FillBlankTest, { canAsk } from './FillBlankTest.js';
-import HangmanTest, { canAsk as canPlayHangman } from './HangmanTest.js';
+import FillBlankTest, { canAsk } from './fill-blank/FillBlankTest.js';
+import HangmanTest, { canAsk as canPlayHangman } from './hangman/HangmanTest.js';
 import WordListChecklist from './WordListChecklist.js';
-import { getWordList, getWordLists } from '../api.js';
-import { pick, t } from '../i18n.js';
-import { saveScore } from '../store.js';
-import { reportResult, user } from '../account/auth.js';
-import { buildTree } from '../wordlistTree.js';
+import { getWordList, getWordLists } from '../../../api.js';
+import { pick, t } from '../../../i18n.js';
+import { saveScore } from '../../../store.js';
+import { reportResult, user } from '../../../account/auth.js';
+import { buildTree } from '../../../wordlistTree.js';
 
 // Add new test types here. `canAsk` says whether a word can be used by that type,
 // and `pictures` marks a type that can show a picture hint.

@@ -1,7 +1,7 @@
-import UserAvatar from '../account/UserAvatar.js';
-import { user } from '../account/auth.js';
-import { pick, t } from '../i18n.js';
-import { scores } from '../store.js';
+import UserAvatar from '../../account/UserAvatar.js';
+import { user } from '../../account/auth.js';
+import { pick, t } from '../../i18n.js';
+import { scores } from '../../store.js';
 
 // Home page sidebar: the user's avatar, then topic links with last scores.
 export default {

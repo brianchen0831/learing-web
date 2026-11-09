@@ -1,4 +1,4 @@
-import { lang, setLang } from '../i18n.js';
+import { lang, setLang } from '../../i18n.js';
 
 export default {
   name: 'LangSwitch',

@@ -17,13 +17,13 @@ Before the test, the student:
 
 The selected words are combined and shuffled, and a word in two lists is only asked once. Full asks every word. A number picks that many at random, or all of them if there are fewer. The test ends after the last word or with **End test**, and the result is shown on the same page. It is also saved as the last score, shown on the Quiz card on the English page.
 
-Main code: `src/components/VocabularyTest.js`, and `src/components/PictureHint.js` for the picture shared by all test types.
+Main code is in `src/components/english/quiz/`, the same path as this topic: `VocabularyTest.js` (the setup and the test page), `WordListChecklist.js` (choosing word lists), and `PictureHint.js` for the picture shared by all test types. Each test type has its own folder there, named after its type id.
 
 ## Test types 測驗類型
 
 ### Fill in the blank 填空
 
-`src/components/FillBlankTest.js`
+`src/components/english/quiz/fill-blank/FillBlankTest.js` (type id `fill-blank`)
 
 - Shows a random word with every letter hidden except the first and last, for example `a _ _ _ _ _ t`. Spaces, hyphens and apostrophes stay visible.
 - Below it are all the word's Chinese meanings. If it has none, its English meanings are shown instead.
@@ -33,7 +33,7 @@ Main code: `src/components/VocabularyTest.js`, and `src/components/PictureHint.j
 
 ### Hangman 猜單字
 
-`src/components/HangmanTest.js`
+`src/components/english/quiz/hangman/HangmanTest.js` (type id `hangman`)
 
 - The whole word is hidden and there are no hints: no Chinese meaning and no picture during the round. Spaces, hyphens and apostrophes stay visible.
 - The word, its meaning and a picture are shown when the round ends. The picture is only requested then, so it cannot give the word away.
@@ -44,9 +44,10 @@ Main code: `src/components/VocabularyTest.js`, and `src/components/PictureHint.j
 
 ### Adding a type 新增類型
 
-1. Create a component that takes `words` and emits `finish` with `{ score, answered }`.
-2. Add it to `TEST_TYPES` in `src/components/VocabularyTest.js`, with a `canAsk(word)` function. To offer the picture hint, add `pictures: true`, and the component also receives a `pictures` prop.
+1. Create a folder named after the type id in `src/components/english/quiz/`, such as `spelling/`, with a component that takes `words` and emits `finish` with `{ score, answered }`.
+2. Add it to `TEST_TYPES` in `src/components/english/quiz/VocabularyTest.js`, with a `canAsk(word)` function. To offer the picture hint, add `pictures: true`, and the component also receives a `pictures` prop.
 3. Add its name to `src/i18n.js`.
+4. For its results to count toward tasks, add the type id to the accepted test types in `account/rewards.py`.
 
 ## Pictures 圖片
 

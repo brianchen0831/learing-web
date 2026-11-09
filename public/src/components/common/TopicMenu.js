@@ -1,6 +1,6 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue';
-import { getTopics } from '../api.js';
-import { pick, t } from '../i18n.js';
+import { getTopics } from '../../api.js';
+import { pick, t } from '../../i18n.js';
 
 // "Topics" dropdown. Closes on outside click, Escape, or choosing a topic.
 export default {

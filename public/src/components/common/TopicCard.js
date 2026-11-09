@@ -1,5 +1,5 @@
-import { pick, t } from '../i18n.js';
-import { scores } from '../store.js';
+import { pick, t } from '../../i18n.js';
+import { scores } from '../../store.js';
 
 export default {
   name: 'TopicCard',

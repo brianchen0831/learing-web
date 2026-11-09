@@ -1,4 +1,4 @@
-import AppHeader from './components/AppHeader.js';
+import AppHeader from './components/common/AppHeader.js';
 import { t } from './i18n.js';
 
 export default {

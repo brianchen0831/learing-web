@@ -1,6 +1,6 @@
 import { computed, ref, watchEffect } from 'vue';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
-import WordDialog from '../components/WordDialog.js';
+import WordDialog from '../components/english/vocabulary/WordDialog.js';
 import { createWordList } from '../api.js';
 import { t } from '../i18n.js';
 

@@ -1,5 +1,5 @@
 import { onMounted, reactive, ref } from 'vue';
-import { t } from '../i18n.js';
+import { t } from '../../../i18n.js';
 
 const emptyMeaning = () => ({ meaning: '', chinese: '', example: '' });
 

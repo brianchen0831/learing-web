@@ -1,6 +1,6 @@
 import { onMounted, ref } from 'vue';
-import HomeSidebar from '../components/HomeSidebar.js';
-import TopicCard from '../components/TopicCard.js';
+import HomeSidebar from '../components/common/HomeSidebar.js';
+import TopicCard from '../components/common/TopicCard.js';
 import { getTopics } from '../api.js';
 import { t } from '../i18n.js';
 

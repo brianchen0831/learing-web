@@ -14,7 +14,7 @@ Word lists for learning English. Each list is stored in the database, and the pa
 - **Dictionary link:** each word links to `https://dictionary.cambridge.org/dictionary/english/<word>`. Spaces in a phrase become `-`.
 - **Pronunciation:** the speaker button left of each word reads it aloud with the browser's speech engine (`src/speech.js`). It prefers a Google voice, which Chrome provides; other browsers use their own English voice. The button is hidden if the browser has no speech engine.
 
-Main code: `src/components/WordList.js`, `src/components/WordListTree.js`, `src/components/WordDialog.js`, `src/views/WordListEditorView.js`.
+Main code: `src/components/english/vocabulary/` (`WordList.js`, `WordListTree.js`, `WordDialog.js`, the same path as this topic) and `src/views/WordListEditorView.js`.
 
 ## New list page 新增單字表
 

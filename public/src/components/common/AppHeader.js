@@ -1,9 +1,9 @@
 import { useRouter } from 'vue-router';
 import LangSwitch from './LangSwitch.js';
 import TopicMenu from './TopicMenu.js';
-import UserAvatar from '../account/UserAvatar.js';
-import { logout, user } from '../account/auth.js';
-import { t } from '../i18n.js';
+import UserAvatar from '../../account/UserAvatar.js';
+import { logout, user } from '../../account/auth.js';
+import { t } from '../../i18n.js';
 
 export default {
   name: 'AppHeader',

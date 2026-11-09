@@ -1,4 +1,4 @@
-import { assetUrl } from '../api.js';
+import { assetUrl } from '../../api.js';
 
 const IMAGE = /\.(png|jpe?g|gif|svg|webp)$/i;
 

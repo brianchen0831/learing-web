@@ -1,10 +1,10 @@
 import { computed, ref, watch, watchEffect } from 'vue';
-import TopicCard from '../components/TopicCard.js';
-import TopicSection from '../components/TopicSection.js';
-import AssetTree from '../components/AssetTree.js';
-import QuizBlock from '../components/QuizBlock.js';
-import WordList from '../components/WordList.js';
-import VocabularyTest from '../components/VocabularyTest.js';
+import TopicCard from '../components/common/TopicCard.js';
+import TopicSection from '../components/common/TopicSection.js';
+import AssetTree from '../components/common/AssetTree.js';
+import QuizBlock from '../components/common/QuizBlock.js';
+import WordList from '../components/english/vocabulary/WordList.js';
+import VocabularyTest from '../components/english/quiz/VocabularyTest.js';
 import { assetUrl, getAssets, getContent } from '../api.js';
 import { lang, t } from '../i18n.js';
 

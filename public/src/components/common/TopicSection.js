@@ -1,4 +1,4 @@
-import { assetUrl } from '../api.js';
+import { assetUrl } from '../../api.js';
 
 // One lesson section from content.json: heading, text[], image, list[], code.
 export default {

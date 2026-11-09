@@ -1,5 +1,5 @@
-import { listsIn } from '../wordlistTree.js';
-import { pick } from '../i18n.js';
+import { listsIn } from '../../../wordlistTree.js';
+import { pick } from '../../../i18n.js';
 
 // Folder view of word lists with checkboxes. A folder's checkbox selects everything
 // inside it, and shows a dash when only part of it is selected.
