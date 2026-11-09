@@ -46,97 +46,97 @@
   },
   "parts": [
     {
-      "id": "eyes-simple", "layer": "eyes", "price": 0, "default": true,
+      "id": "eyes-simple", "layer": "eyes", "default": true,
       "label": { "en": "Simple eyes", "zh": "簡單眼睛" },
       "files": { "male": "male/eyes-simple.png", "female": "female/eyes-simple.png" }
     },
     {
-      "id": "nose-simple", "layer": "nose", "price": 0, "default": true,
+      "id": "nose-simple", "layer": "nose", "default": true,
       "label": { "en": "Simple nose", "zh": "簡單鼻子" },
       "files": { "male": "male/nose-simple.png", "female": "female/nose-simple.png" }
     },
     {
-      "id": "mouth-smile", "layer": "mouth", "price": 0, "default": true,
+      "id": "mouth-smile", "layer": "mouth", "default": true,
       "label": { "en": "Smile", "zh": "微笑" },
       "files": { "male": "male/mouth-smile.png", "female": "female/mouth-smile.png" }
     },
     {
-      "id": "hair-short-black", "layer": "hair", "price": 0, "default": true,
+      "id": "hair-short-black", "layer": "hair", "default": true,
       "label": { "en": "Very short hair", "zh": "極短髮" },
       "files": { "male": "male/hair-short-black.png", "female": "female/hair-short-black.png" }
     },
     {
-      "id": "vest-white", "layer": "upper", "price": 0, "default": true,
+      "id": "vest-white", "layer": "upper", "default": true,
       "label": { "en": "White vest", "zh": "白色背心" },
       "files": { "male": "male/vest-white.png", "female": "female/vest-white.png" }
     },
     {
-      "id": "shorts-white", "layer": "lower", "price": 0, "default": true,
+      "id": "shorts-white", "layer": "lower", "default": true,
       "label": { "en": "White shorts", "zh": "白色短褲" },
       "files": { "male": "male/shorts-white.png", "female": "female/shorts-white.png" }
     },
     {
-      "id": "hair-wavy-black", "layer": "hair", "price": 60, "view": "250 40 220 200",
+      "id": "hair-wavy-black", "layer": "hair", "view": "250 40 220 200",
       "label": { "en": "Wavy hair", "zh": "波浪髮" },
       "files": { "male": "male/hair-wavy-black.png" }
     },
     {
-      "id": "hair-pixie-brown", "layer": "hair", "price": 60, "view": "250 50 220 200",
+      "id": "hair-pixie-brown", "layer": "hair", "view": "250 50 220 200",
       "label": { "en": "Pixie cut", "zh": "精靈短髮" },
       "files": { "female": "female/hair-pixie-brown.png" }
     },
     {
-      "id": "hair-wavy-short", "layer": "hair", "price": 60, "view": "187 68 347 350",
+      "id": "hair-wavy-short", "layer": "hair", "view": "187 68 347 350",
       "label": { "en": "Short wavy hair", "zh": "波浪短髮" },
       "files": { "female": "female/hair-wavy-short.png" }
     },
     {
-      "id": "hair-wavy-medium", "layer": "hair", "price": 80, "view": "180 68 362 435",
+      "id": "hair-wavy-medium", "layer": "hair", "view": "180 68 362 435",
       "label": { "en": "Medium wavy hair", "zh": "中長波浪髮" },
       "files": { "female": "female/hair-wavy-medium.png" }
     },
     {
-      "id": "hair-wavy-full", "layer": "hair", "price": 80, "view": "179 68 363 450",
+      "id": "hair-wavy-full", "layer": "hair", "view": "179 68 363 450",
       "label": { "en": "Full wavy hair", "zh": "豐盈波浪髮" },
       "files": { "female": "female/hair-wavy-full.png" }
     },
     {
-      "id": "hair-wavy-long", "layer": "hair", "price": 100, "view": "169 68 384 563",
+      "id": "hair-wavy-long", "layer": "hair", "view": "169 68 384 563",
       "label": { "en": "Long wavy hair", "zh": "長波浪髮" },
       "files": { "female": "female/hair-wavy-long.png" }
     },
     {
-      "id": "hair-curls-short", "layer": "hair", "price": 60, "view": "187 68 347 350",
+      "id": "hair-curls-short", "layer": "hair", "view": "187 68 347 350",
       "label": { "en": "Short curls", "zh": "短捲髮" },
       "files": { "female": "female/hair-curls-short.png" }
     },
     {
-      "id": "hair-curls-medium", "layer": "hair", "price": 80, "view": "168 68 385 469",
+      "id": "hair-curls-medium", "layer": "hair", "view": "168 68 385 469",
       "label": { "en": "Medium curls", "zh": "中長捲髮" },
       "files": { "female": "female/hair-curls-medium.png" }
     },
     {
-      "id": "hair-curls-long", "layer": "hair", "price": 100, "view": "168 68 385 506",
+      "id": "hair-curls-long", "layer": "hair", "view": "168 68 385 506",
       "label": { "en": "Long curls", "zh": "長捲髮" },
       "files": { "female": "female/hair-curls-long.png" }
     },
     {
-      "id": "blazer-navy", "layer": "upper", "price": 80, "view": "170 300 375 410",
+      "id": "blazer-navy", "layer": "upper", "view": "170 300 375 410",
       "label": { "en": "Navy school blazer", "zh": "海軍藍制服外套" },
       "files": { "female": "female/blazer-navy.png" }
     },
     {
-      "id": "skirt-pleated-navy", "layer": "lower", "price": 60, "view": "220 570 285 305",
+      "id": "skirt-pleated-navy", "layer": "lower", "view": "220 570 285 305",
       "label": { "en": "Navy pleated skirt", "zh": "海軍藍百褶裙" },
       "files": { "female": "female/skirt-pleated-navy.png" }
     },
     {
-      "id": "socks-knee-white", "layer": "socks", "price": 30, "view": "240 940 240 310",
+      "id": "socks-knee-white", "layer": "socks", "view": "240 940 240 310",
       "label": { "en": "White knee socks", "zh": "白色及膝襪" },
       "files": { "female": "female/socks-knee-white.png" }
     },
     {
-      "id": "shoes-black", "layer": "shoes", "price": 50, "view": "235 1125 255 150",
+      "id": "shoes-black", "layer": "shoes", "view": "235 1125 255 150",
       "label": { "en": "Black school shoes", "zh": "黑色制服皮鞋" },
       "files": { "female": "female/shoes-black.png" }
     }

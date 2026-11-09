@@ -19,7 +19,8 @@ const enc = (path) => path.split('/').map(encodeURIComponent).join('/');
 
 // `topic` is a topic or subtopic path: "math" or "english/vocabulary".
 // Paper doll catalog: genders, skins, layers and parts. See account/doll.py.
-export const getDoll = () => getJSON('/assets/avatars/doll/parts.json');
+// The doll catalog with shop prices filled in by the server (prices live in account/avatar-art/*/shop.json)
+export const getDoll = () => getJSON('/api/doll');
 export const dollUrl = (file) => '/assets/avatars/doll/' + file.split('/').map(encodeURIComponent).join('/');
 export const getTopics = () => getJSON('/api/topics');
 export const getContent = (topic) => getJSON(`/topics/${enc(topic)}/content.json`);

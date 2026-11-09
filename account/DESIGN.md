@@ -92,7 +92,7 @@ Everything about the doll is in `public/assets/avatars/doll/parts.json`, read by
 | `layers` | Layer order, back to front. `required` layers can be swapped but never removed. `shop` says which shop sells the layer: `clothes`, `hair` or `beauty`. |
 | `hairColors` | Free hair colors: black, brunette, red, blonde, grey. Each has four `stops`, from outline to highlight. |
 | `head` | The head-icon crop for each gender. |
-| `parts` | Every part: `id`, `layer`, `price`, `label`, `files` (one per gender it fits), and `default` or `view`. |
+| `parts` | Every part: `id`, `layer`, `label`, `files` (one per gender it fits), and `default` or `view`. Prices are not here; see **Shop lists** below. |
 
 Layer order 圖層順序: background, back, body, socks, shoes, lower, upper, makeup, eyes, nose, mouth, hair, accessory, foreground, pet.
 
@@ -100,7 +100,35 @@ Layer order 圖層順序: background, back, body, socks, shoes, lower, upper, ma
 - **Hair color:** every hair image is gray, stretched so its outline is black and its highlights white. The site colors it with a gradient map (SVG `feComponentTransfer`) through the chosen color's `stops`, so every style comes in every color. The avatar saves it as `hair_color`; an avatar without one uses the first color. The server refuses a color that is not in the catalog.
 - **Required layers:** upper, lower, eyes, nose, mouth and hair. Upper and lower can never be empty, because the body's underwear would be colored as skin.
 - **Defaults:** simple eyes, nose and mouth, very short black hair, a white vest and white shorts, and bare feet. These are the parts marked `default`.
-- **Price 0** parts are free choices in the customizer. Parts **above 0** are sold in the dressing room.
+- **Price 0** parts are free choices in the customizer. Parts **above 0** are sold in the shops.
+
+### Shop lists 商品價格表
+
+Prices live in one list per part folder in `account/avatar-art/`, next to that kind of art:
+
+| List | Parts |
+| ---- | ----- |
+| `hair-style/shop.json` | hair styles |
+| `upper-body/shop.json` | tops |
+| `lower-body/shop.json` | skirts, trousers |
+| `socks/shop.json` | socks |
+| `shoes/shop.json` | shoes |
+
+Any other folder there can have a `shop.json` too (such as `eyes/`, `makeup/`, `accessories/`, `pets/`); the server reads the `shop.json` in every folder. The format:
+
+```json
+{
+  "items": [
+    { "id": "hair-wavy-short", "price": 60 },
+    { "id": "hair-curls-long", "price": 100 }
+  ]
+}
+```
+
+- `id` is a part id from `parts.json`; `price` is a whole number of coins. A part in no list, or priced 0, is free (shown in the customizer, not in the shops).
+- The server (`Catalog` in `account/doll.py`) reads the lists at startup and again whenever one changes, so a new price applies without a restart. The site gets the catalog with prices filled in from `GET /api/doll`.
+- A mistake (an unknown part, a part in two lists, a price that is not a whole number of 0 or more) stops the server at startup, naming the file. If it happens while running, the server keeps the last good prices and prints the problem.
+- Changing a price does not change what people already own.
 
 An avatar is saved as:
 
@@ -140,7 +168,7 @@ An avatar is saved as:
 
 - The gender and skin must be in the catalog, and each part must exist, be on its own layer and fit the gender.
 - A paid part must be owned to wear. Required layers missing from a request get their default.
-- A purchase is refused for a part that is free, unknown, owned, does not fit the body, or costs more than the user's coins. The price always comes from the server's catalog.
+- A purchase is refused for a part that is free, unknown, owned, does not fit the body, or costs more than the user's coins. The price always comes from the server's shop lists.
 - Coins and owned parts are kept in the encrypted account record. Changes to an account happen one at a time.
 - `POST /api/account/buy` takes `{ "item": "<part id>" }` and needs a login.
 
@@ -155,7 +183,8 @@ An account saved before the paper doll (no `"version": 2`) starts over when it i
 1. Make the image on the matching template, then fit it to the 720 × 1272 canvas as a transparent PNG. See [avatar-art/PROMPTS.md](avatar-art/PROMPTS.md).
 2. Save it as `public/assets/avatars/doll/<gender>/<id>.png`, once per gender it fits.
 3. Add it to `parts` in `parts.json`. A `view` (x y width height) sets the crop on its shop card.
-4. Restart the server, which reads the catalog at startup.
+4. To sell it, add `{ "id": "<id>", "price": <coins> }` to the `shop.json` of its art folder.
+5. Restart the server, which reads `parts.json` at startup. (Price changes alone need no restart.)
 
 Do not delete a part once people own it. A worn part missing from the catalog makes saving that avatar fail.
 

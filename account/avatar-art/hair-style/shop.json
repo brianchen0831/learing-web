@@ -1,0 +1,13 @@
+{
+  "items": [
+    { "id": "hair-wavy-black",   "price": 150 },
+    { "id": "hair-pixie-brown",  "price": 150 },
+    { "id": "hair-wavy-short",   "price": 150 },
+    { "id": "hair-wavy-medium",  "price": 170 },
+    { "id": "hair-wavy-full",    "price": 200 },
+    { "id": "hair-wavy-long",    "price": 250 },
+    { "id": "hair-curls-short",  "price": 150 },
+    { "id": "hair-curls-medium", "price": 170 },
+    { "id": "hair-curls-long",   "price": 200 }
+  ]
+}

@@ -8,6 +8,7 @@ Routes
                                       POST creates a new list
   /api/wordlists/<topic>/<sub>/<id>   one word list; <id> may include folders
   /api/account/...       register, login, logout, avatar and me (see account/)
+  /api/doll              the paper doll catalog (parts.json) with shop prices filled in
   other files            static files from public/ (Vue app, content, assets)
   other paths            public/index.html (the Vue Router app handles them)
 """
@@ -44,6 +45,7 @@ LOCAL_HOSTS = ("localhost", "127.0.0.1")
 CONFIG_FILE = os.path.join(ROOT, "config.json")
 DEFAULT_CONFIG = {"database_path": "database", "secret_key_path": "secret.key"}
 DOLL_CATALOG = os.path.join(PUBLIC, "assets", "avatars", "doll", "parts.json")
+SHOP_LISTS = os.path.join(ROOT, "account", "avatar-art")  # <folder>/shop.json: prices per part
 ACCOUNTS_FOLDER = "accounts"
 TASK_FOLDER = "task"  # <database>/<topic>/task/ holds that topic's task files
 
@@ -298,6 +300,10 @@ class Handler(AccountRoutes, SimpleHTTPRequestHandler):
             self.account_tasks()
             return
 
+        if path == "/api/doll":
+            self.send_json(self.accounts.catalog.public())
+            return
+
         if path == "/api/topics":
             try:
                 with open(TOPICS_JSON, "rb") as f:
@@ -415,7 +421,10 @@ def main():
     accounts_folder = os.path.join(database, ACCOUNTS_FOLDER)
     secret = load_secret(config_path(config, "secret_key_path"), accounts_folder)
     Handler.database = database
-    catalog = Catalog(DOLL_CATALOG)
+    try:
+        catalog = Catalog(DOLL_CATALOG, SHOP_LISTS)
+    except ValueError as error:
+        sys.exit(f"Shop list problem: {error}")
     def task_files():
         """Every .json file in each top-level topic's task folder, such as
         <database>/english/task/. One file per kind of task keeps them easy to manage."""

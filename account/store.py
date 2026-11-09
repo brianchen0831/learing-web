@@ -83,7 +83,7 @@ def clean_avatar(avatar, catalog, owned):
             raise AccountError("unknown_item")
         if part["layer"] != layer or not catalog.fits(part, gender):
             raise AccountError("invalid_avatar")
-        if part.get("price", 0) > 0 and part_id not in owned:
+        if catalog.price(part_id) > 0 and part_id not in owned:
             raise AccountError("not_owned")
         parts[layer] = part_id
     if any(layer not in parts for layer in catalog.required):
@@ -354,7 +354,9 @@ class AccountStore:
                 raise AccountError("not_logged_in")
             owned = record.setdefault("owned", [])
             coins = record.get("coins", STARTING_COINS)
-            price = self.catalog.parts[item_id]["price"]
+            price = self.catalog.price(item_id)
+            if price <= 0:
+                raise AccountError("unknown_item")
             if item_id in owned:
                 raise AccountError("already_owned")
             if not self.catalog.fits(self.catalog.parts[item_id], record["avatar"]["gender"]):
