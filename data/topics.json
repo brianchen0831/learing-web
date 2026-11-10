@@ -4,7 +4,7 @@
     "icon": "➗",
     "image": "/topics/math/assets/images/hero.jpg",
     "title": { "en": "Math", "zh": "數學" },
-    "summary": { "en": "To be done", "zh": "待完成" }
+    "summary": { "en": "Quiz papers", "zh": "測驗卷" }
   },
   {
     "slug": "english",

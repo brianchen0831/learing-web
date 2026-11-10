@@ -9,6 +9,9 @@ Routes
   /api/wordlists/<topic>/<sub>/<id>   one word list; <id> may include folders
   /api/account/...       register, login, logout, avatar and me (see account/)
   /api/doll              the paper doll catalog (parts.json) with shop prices filled in
+  /api/papers/<topic>/<sub>           quiz papers in that database folder (such as math/quiz)
+  /api/papers/<topic>/<sub>/<id>      one paper; <id> may include folders
+  /api/papers/<topic>/<sub>/<path>.png  a paper's figure
   other files            static files from public/ (Vue app, content, assets)
   other paths            public/index.html (the Vue Router app handles them)
 """
@@ -35,6 +38,9 @@ TOPICS_DIR = os.path.join(PUBLIC, "topics")
 TOPICS_JSON = os.path.join(ROOT, "data", "topics.json")
 SLUG_RE = re.compile(r"^/api/assets/([a-z0-9-]+(?:/[a-z0-9-]+)?)/?$")
 WORDLIST_RE = re.compile(r"^/api/wordlists/([a-z0-9-]+/[a-z0-9-]+)(?:/(.+?))?/?$")
+PAPER_RE = re.compile(r"^/api/papers/([a-z0-9-]+/[a-z0-9-]+)(?:/(.+?))?/?$")
+PAPER_IMAGES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".webp": "image/webp"}
+MAX_IMAGE = 5 * 1024 * 1024
 MEANING_FIELDS = ("meaning", "chinese", "example")
 MAX_BODY = 1024 * 1024
 MAX_TITLE = 100
@@ -230,15 +236,61 @@ def wordlist_index(folder, prefix=""):
     return lists
 
 
-def wordlist_file(folder, list_id):
+def wordlist_file(folder, list_id, extension=".json"):
     """Path of a list inside folder, or None if the id would lead anywhere else."""
     parts = list_id.split("/")
     for part in parts:
         if not part or part.startswith(".") or any(c in part for c in '\\:\0'):
             return None
-    path = os.path.join(folder, *parts) + ".json"
+    path = os.path.join(folder, *parts) + extension
     root = os.path.realpath(folder) + os.sep
     return path if os.path.realpath(path).startswith(root) else None
+
+
+def read_paper(path):
+    """A quiz paper's data (see public/topics/math/DESIGN.md), or None if missing or not valid."""
+    try:
+        with open(path, encoding="utf-8-sig") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return None
+    sections = data.get("sections") if isinstance(data, dict) else None
+    if not isinstance(sections, list):
+        return None
+    for section in sections:
+        if not isinstance(section, dict) or not isinstance(section.get("questions"), list):
+            return None
+    return data
+
+
+def paper_index(folder, prefix=""):
+    """Every paper in folder and its subfolders, as a flat list; folders first, A-Z.
+    A paper's id is its path without .json, such as "grade2/imc/imc-20-taiwan-final-grade2".
+    Folders named images (figures) and results (users' saved results) are skipped."""
+    if not os.path.isdir(folder):
+        return []
+    papers, files = [], []
+    for name in sorted(os.listdir(folder), key=str.lower):
+        full = os.path.join(folder, name)
+        if name.startswith(".") or os.path.islink(full):
+            continue
+        if os.path.isdir(full):
+            if name.lower() not in ("images", "results"):
+                papers.extend(paper_index(full, f"{prefix}{name}/"))
+        elif os.path.splitext(name)[1].lower() == ".json":
+            files.append(name)
+    for name in files:
+        paper_id = prefix + os.path.splitext(name)[0]
+        data = read_paper(os.path.join(folder, name))
+        if data is None:
+            papers.append({"id": paper_id, "invalid": True})
+            continue
+        questions = sum(len(s["questions"]) for s in data["sections"])
+        points = sum(s.get("points_each", 0) * len(s["questions"]) for s in data["sections"])
+        papers.append({"id": paper_id, "title": data.get("title"), "grade": data.get("grade"),
+                       "questions": questions, "points": data.get("total_points", points),
+                       "minutes": data.get("time_limit_minutes")})
+    return papers
 
 
 class Handler(AccountRoutes, SimpleHTTPRequestHandler):
@@ -326,6 +378,11 @@ class Handler(AccountRoutes, SimpleHTTPRequestHandler):
                 self.send_json(data)
             return
 
+        match = PAPER_RE.match(path)
+        if match:
+            self.serve_paper(match.group(1), match.group(2))
+            return
+
         match = SLUG_RE.match(path)
         if match:
             assets = os.path.join(TOPICS_DIR, match.group(1), "assets")
@@ -373,6 +430,42 @@ class Handler(AccountRoutes, SimpleHTTPRequestHandler):
         except ValueError:
             self.send_json({"error": "not valid JSON"}, 400)
             return None
+
+    def serve_paper(self, topic, rest):
+        """/api/papers/<topic>/<sub>: the papers there; .../<paper id>: one paper;
+        .../<path>.png (or another image type): a figure, such as grade2/imc/images/fill-2-clock.png."""
+        if topic not in topic_folders():
+            self.send_json({"error": "no such topic"}, 404)
+            return
+        folder = os.path.join(self.database, *topic.split("/"))
+        if rest is None:
+            self.send_json(paper_index(folder))
+            return
+        rest = unquote(rest)
+        base, extension = os.path.splitext(rest)
+        content_type = PAPER_IMAGES.get(extension.lower())
+        if content_type:
+            file = wordlist_file(folder, base, extension)
+            try:
+                if not file or not os.path.isfile(file) or os.path.getsize(file) > MAX_IMAGE:
+                    raise OSError
+                with open(file, "rb") as f:
+                    body = f.read()
+            except OSError:
+                self.send_error(404, "Figure not found")
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        file = wordlist_file(folder, rest)
+        data = read_paper(file) if file else None
+        if data is None:
+            self.send_json({"error": "paper not found or not valid"}, 404)
+        else:
+            self.send_json(data)
 
     def do_POST(self):
         path = self.path.split("?")[0]

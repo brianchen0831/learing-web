@@ -29,6 +29,12 @@ export const getAssets = (topic) => getJSON(`/api/assets/${enc(topic)}`, { allow
 export const getWordLists = (topic) => getJSON(`/api/wordlists/${enc(topic)}`);
 export const getWordList = (topic, id) => getJSON(`/api/wordlists/${enc(topic)}/${enc(id)}`);
 
+// Quiz papers in a database folder such as "math/quiz"; a paper id may include folders.
+export const getPapers = (topic) => getJSON(`/api/papers/${enc(topic)}`);
+export const getPaper = (topic, id) => getJSON(`/api/papers/${enc(topic)}/${enc(id)}`);
+// A file next to the papers, such as a figure: "grade2/imc/images/fill-2-clock.png"
+export const paperFileUrl = (topic, path) => `/api/papers/${enc(topic)}/${enc(path)}`;
+
 // First picture for a word from Openverse (openly licensed images, no key needed).
 // Returns null when there is none, including when the computer is offline.
 export async function findPicture(word) {

@@ -36,6 +36,10 @@ learning-web/
 
 ## Pages 頁面
 
+Every page has the **site sidebar** on the left (`src/components/common/SiteNav.js`): Home, each topic with its subtopics and Tasks page, and the account pages (or Log in and Create account). The page being shown is highlighted. On wide screens it folds to a thin strip with its arrow button, remembered in the browser, giving the page more width; on narrow screens it is a drawer opened with ☰ in the header and closed when a page is chosen. Topics and subtopics are read from `data/topics.json` and each topic's `content.json`, so new ones appear by themselves. Pages use the rest of the width, up to 1400 px.
+
+網站每一頁左側都有側邊欄，列出首頁、各主題與子主題、任務頁和帳號頁面；寬螢幕可收合，手機上用頁首的 ☰ 打開。
+
 | URL | Page |
 | --- | ---- |
 | `/` | Home page: topic cards, sidebar, Topics dropdown |
@@ -56,7 +60,9 @@ learning-web/
 
 | Topic | Status | Design |
 | ----- | ------ | ------ |
-| Math 數學 | To be done | [DESIGN.md](public/topics/math/DESIGN.md) |
+| Math 數學 | Has subtopics | [DESIGN.md](public/topics/math/DESIGN.md) |
+| Math: Quiz 測驗 | Quiz papers, one question per page | [DESIGN.md](public/topics/math/DESIGN.md) |
+| Math: Solutions 解析 | Answers and worked solutions, papers in their folders | [DESIGN.md](public/topics/math/DESIGN.md) |
 | English 英文 | Has subtopics | [DESIGN.md](public/topics/english/DESIGN.md) |
 | English: Vocabulary 單字 | Word lists | [DESIGN.md](public/topics/english/vocabulary/DESIGN.md) |
 | English: Quiz 測驗 | Vocabulary test | [DESIGN.md](public/topics/english/quiz/DESIGN.md) |
@@ -84,6 +90,6 @@ Tasks are defined in `.json` files in each top-level topic's task folder, such a
 
 - **No build step**: Vue runs straight from `public/`.
 - **Topics are independent**: a topic's content, assets and design document live in its own folder; shared code lives in `src/` and `css/`.
-- **Components follow the topics**: `src/components/common/` holds the parts every page uses, and each topic's components sit under the same path as the topic, such as `src/components/english/vocabulary/` and `src/components/english/quiz/`. Each quiz type has its own folder named after its type id, such as `english/quiz/fill-blank/`, `english/quiz/hangman/` and `english/quiz/listening/`.
+- **Components follow the topics**: `src/components/common/` holds the parts every page uses, and each topic's components sit under the same path as the topic, such as `src/components/english/vocabulary/` and `src/components/english/quiz/`. Each quiz type has its own folder named after its type id, such as `english/quiz/fill-blank/`, `english/quiz/hangman/` and `english/quiz/listening/`. Math quiz papers are in `src/components/math/quiz/` and their solutions page in `src/components/math/solutions/`.
 - **Local and safe**: the server only listens on this computer, and other websites cannot write to the database.
 - **Line endings**: LF everywhere.

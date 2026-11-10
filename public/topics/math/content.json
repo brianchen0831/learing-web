@@ -1,4 +1,16 @@
 {
+  "subtopics": [
+    {
+      "slug": "quiz",
+      "title": { "en": "Quiz", "zh": "測驗" },
+      "summary": { "en": "Practise with contest papers", "zh": "競賽試卷練習" }
+    },
+    {
+      "slug": "solutions",
+      "title": { "en": "Solutions", "zh": "解析" },
+      "summary": { "en": "Answers and worked solutions of the papers", "zh": "試卷的答案與解析" }
+    }
+  ],
   "en": { "title": "Math", "sections": [], "quiz": [] },
   "zh": { "title": "數學", "sections": [], "quiz": [] }
 }

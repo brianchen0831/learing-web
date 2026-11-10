@@ -4,6 +4,7 @@ import TopicMenu from './TopicMenu.js';
 import UserAvatar from '../../account/UserAvatar.js';
 import { logout, user } from '../../account/auth.js';
 import { t } from '../../i18n.js';
+import { navOpen } from '../../layout.js';
 
 export default {
   name: 'AppHeader',
@@ -16,11 +17,13 @@ export default {
       router.push('/');
     }
 
-    return { user, signOut, t };
+    return { user, signOut, navOpen, t };
   },
   template: `
     <header>
       <div class="header-left">
+        <button type="button" class="sitenav-toggle" aria-controls="sitenav" :aria-expanded="String(navOpen)"
+                :aria-label="t('nav.menu')" :title="t('nav.menu')" @click="navOpen = !navOpen">☰</button>
         <RouterLink class="brand" to="/">{{ t('site.title') }}</RouterLink>
         <TopicMenu v-if="$route.name === 'home'" />
       </div>

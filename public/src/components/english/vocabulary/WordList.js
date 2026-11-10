@@ -4,7 +4,7 @@ import { getWordList, getWordLists } from '../../../api.js';
 import { pick, t } from '../../../i18n.js';
 import { canSpeak, speak } from '../../../speech.js';
 import { buildTree } from '../../../wordlistTree.js';
-import WordListTree from './WordListTree.js';
+import FolderTree from '../../common/FolderTree.js';
 
 const dictionaryUrl = (word) =>
   'https://dictionary.cambridge.org/dictionary/english/' +
@@ -24,7 +24,7 @@ function loadFolded() {
 // The selected list is kept in the URL (?list=animals).
 export default {
   name: 'WordList',
-  components: { WordListTree },
+  components: { FolderTree },
   props: { topic: { type: String, required: true } },
   setup(props) {
     const route = useRoute();
@@ -90,7 +90,7 @@ export default {
           </button>
         </div>
         <div v-show="!folded" id="wordlist-nav-body">
-          <WordListTree :nodes="tree" :selected-id="selectedId" :label="label" />
+          <FolderTree :nodes="tree" :selected-id="selectedId" :label="label" />
           <RouterLink class="btn" :to="'/topics/' + topic + '/new'">+ {{ t('wordlist.new') }}</RouterLink>
         </div>
       </nav>

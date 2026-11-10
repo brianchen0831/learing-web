@@ -5,13 +5,15 @@ import AssetTree from '../components/common/AssetTree.js';
 import QuizBlock from '../components/common/QuizBlock.js';
 import WordList from '../components/english/vocabulary/WordList.js';
 import VocabularyTest from '../components/english/quiz/VocabularyTest.js';
+import PaperQuiz from '../components/math/quiz/PaperQuiz.js';
+import PaperSolutions from '../components/math/solutions/PaperSolutions.js';
 import { assetUrl, getAssets, getContent } from '../api.js';
 import { lang, t } from '../i18n.js';
 
 // Shows a topic (/topics/english) or a subtopic (/topics/english/vocabulary).
 export default {
   name: 'TopicView',
-  components: { TopicCard, TopicSection, AssetTree, QuizBlock, WordList, VocabularyTest },
+  components: { TopicCard, TopicSection, AssetTree, QuizBlock, WordList, VocabularyTest, PaperQuiz, PaperSolutions },
   props: {
     slug: { type: String, required: true },
     sub: { type: String, default: '' },
@@ -65,6 +67,8 @@ export default {
 
     const isWordList = computed(() => !!data.value && data.value.view === 'wordlist');
     const testSource = computed(() => (data.value && data.value.view === 'vocabulary-test' ? data.value.source : ''));
+    const paperSource = computed(() => (data.value && data.value.view === 'paper-quiz' ? data.value.source : ''));
+    const solutionSource = computed(() => (data.value && data.value.view === 'paper-solutions' ? data.value.source : ''));
 
     const backTo = computed(() => (props.sub ? `/topics/${props.slug}` : '/'));
     const backLabel = computed(() => {
@@ -77,7 +81,7 @@ export default {
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    return { path, status, c, tree, sections, hasQuiz, hasLesson, subtopics, isWordList, testSource, heroStyle, backTo, backLabel, scrollTo, t };
+    return { path, status, c, tree, sections, hasQuiz, hasLesson, subtopics, isWordList, testSource, paperSource, solutionSource, heroStyle, backTo, backLabel, scrollTo, t };
   },
   template: `
     <main>
@@ -103,6 +107,12 @@ export default {
         </div>
         <div v-else-if="testSource" class="wordlist">
           <VocabularyTest :key="path" :slug="path" :source="testSource" />
+        </div>
+        <div v-else-if="paperSource" class="wordlist">
+          <PaperQuiz :key="path" :slug="path" :source="paperSource" />
+        </div>
+        <div v-else-if="solutionSource" class="wordlist">
+          <PaperSolutions :key="path" :source="solutionSource" />
         </div>
         <section v-else-if="!hasLesson && !subtopics.length" class="lesson todo">{{ t('topic.todo') }}</section>
         <div v-if="hasLesson" class="layout">
