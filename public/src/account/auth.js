@@ -15,11 +15,14 @@ async function post(url, body) {
   return data;
 }
 
-// Resolves once the server has said who is logged in.
-export const authReady = fetch('/api/account/me')
+// Asks the server again who is logged in, with their saved avatar.
+export const refreshUser = () => fetch('/api/account/me')
   .then((res) => res.json())
   .then((data) => { user.value = data.user; })
   .catch(() => {});
+
+// Resolves once the server has said who is logged in.
+export const authReady = refreshUser();
 
 export const register = (name, password, avatar) => post('/api/account/register', { name, password, avatar });
 export const login = (name, password) => post('/api/account/login', { name, password });

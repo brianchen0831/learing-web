@@ -400,12 +400,30 @@ figcaption { color: var(--muted); font-size: .9rem; margin-top: .3rem; }
 .room-actions .btn { padding: .35rem .6rem; font-size: .92rem; }
 .room-actions .room-arrange { flex: 1 0 100%; text-align: center; }
 /* Arrange page */
-.arrange-page { max-width: 1000px; }
-.arrange-page h1 { font-size: 1.7rem; font-weight: 600; margin: 0 0 .4rem; }
-.arrange-layout { display: grid; gap: 1.2rem; margin-top: 1rem; }
-@media (min-width: 800px) { .arrange-layout { grid-template-columns: minmax(0, 580px) minmax(0, 1fr); align-items: start; } }
-.arrange-stage-box { padding: .8rem; }
-.arrange-stage { position: relative; width: 100%; max-width: 560px; margin: 0 auto; aspect-ratio: 1180 / 1530; background: var(--fill); border-radius: var(--radius); }
+/* The arrange workspace fills the whole window: the canvas, and the layer panel on the right */
+.arrange-workspace { height: 100vh; overflow: hidden; background: var(--bg); }
+.arrange-layout { display: grid; height: 100%; grid-template-columns: minmax(0, 1fr) 340px; }
+.arrange-stage-box { min-width: 0; min-height: 0; padding: .6rem; }
+.arrange-stage { position: relative; width: 100%; height: 100%; background: var(--fill); border-radius: var(--radius); }
+.arrange-panel { overflow-y: auto; padding: 1rem 1.2rem 1.5rem; background: var(--surface); border-left: 1px solid var(--border); }
+.arrange-panel h1 { font-size: 1.4rem; font-weight: 600; margin: 0 0 .4rem; }
+.arrange-panel .intro { font-size: .9rem; }
+.arrange-overlay.arrange-idle { cursor: default; }
+/* Scroll bars of the canvas when zoomed in */
+.arrange-scroll { position: absolute; z-index: 2; background: rgba(0, 0, 0, .08); border-radius: 7px; touch-action: none; cursor: pointer; }
+.arrange-scroll-x { left: 8px; right: 26px; bottom: 6px; height: 14px; }
+.arrange-scroll-y { top: 52px; bottom: 26px; right: 6px; width: 14px; }
+.arrange-thumb { position: absolute; background: var(--border-strong); border-radius: 7px; opacity: .75; }
+.arrange-scroll-x .arrange-thumb { top: 2px; bottom: 2px; }
+.arrange-scroll-y .arrange-thumb { left: 2px; right: 2px; }
+.arrange-scroll:hover .arrange-thumb { opacity: 1; }
+.arrange-panel .dialog-actions { position: sticky; bottom: -1.5rem; margin: 1rem -1.2rem -1.5rem; padding: .7rem 1.2rem; background: var(--surface); border-top: 1px solid var(--border); flex-wrap: wrap; }
+@media (max-width: 700px) {
+  .arrange-workspace { height: auto; overflow: visible; }
+  .arrange-layout { grid-template-columns: 1fr; height: auto; }
+  .arrange-stage-box { height: 70vh; }
+  .arrange-panel { border-left: 0; border-top: 1px solid var(--border); }
+}
 .arrange-shown { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 8 6; vector-effect: non-scaling-stroke; pointer-events: none; }
 .arrange-shown-label { font-size: 28px; fill: var(--muted); pointer-events: none; }
 .arrange-follow { display: block; margin-bottom: .7rem; }
@@ -416,10 +434,19 @@ figcaption { color: var(--muted); font-size: .9rem; margin-top: .3rem; }
 .arrange-overlay { touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; outline: none; border-radius: var(--radius); }
 .arrange-overlay:focus-visible { box-shadow: 0 0 0 3px var(--accent); }
 .arrange-overlay:active { cursor: grabbing; }
-.arrange-frame { fill: none; stroke: var(--text); stroke-width: 3; stroke-dasharray: 10 7; vector-effect: non-scaling-stroke; }
-.arrange-handle { fill: var(--surface); stroke: var(--text); stroke-width: 3; cursor: nwse-resize; }
+/* The picked layer's box: a thin dashed line, so it does not hide the drawing */
+.arrange-frame { fill: none; stroke: var(--text); stroke-width: 1; stroke-dasharray: 4 3; stroke-opacity: .8; vector-effect: non-scaling-stroke; }
+.arrange-handle { fill: var(--surface); stroke: var(--text); stroke-width: 1.5; vector-effect: non-scaling-stroke; cursor: nwse-resize; }
+.arrange-layers li { position: relative; }
+.arrange-layers li.dragging { opacity: .45; }
+.arrange-layers li.drop-above::before, .arrange-layers li.drop-below::after {
+  content: ""; position: absolute; left: 0; right: 0; height: 3px; border-radius: 2px; background: var(--text);
+}
+.arrange-layers li.drop-above::before { top: -3px; }
+.arrange-layers li.drop-below::after { bottom: -3px; }
+.arrange-grip { color: var(--muted); margin-right: .4rem; cursor: grab; }
 .arrange-panel h2 { font-size: 1.1rem; margin-bottom: .6rem; }
-.arrange-layers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .3rem; max-width: 320px; }
+.arrange-layers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .3rem; }
 .arrange-layers .btn { display: block; width: 100%; text-align: left; padding: .3rem .65rem; font-size: .92rem; }
 .arrange-hint { margin: .2rem 0; font-size: .82rem; color: var(--muted); }
 .arrange-order { display: flex; flex-wrap: wrap; gap: .4rem; margin: .8rem 0 1rem; }

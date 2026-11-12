@@ -1,5 +1,5 @@
 import { computed } from 'vue';
-import { doll, hairTables, layersOf, skinColor, transformOf } from './doll.js';
+import { doll, hairTables, isSkin, layersOf, skinColor, transformOf } from './doll.js';
 
 let nextId = 0;
 // Full body: the figure spans about y 84-1236, so trim the empty margins while keeping
@@ -7,7 +7,8 @@ let nextId = 0;
 export const FULL_VIEW = '29 70 662 1170';
 
 // Paper doll drawn from stacked image layers on a 720 x 1272 canvas. The body image is
-// light gray, and the skin color is multiplied over it. The hair image is gray too, and
+// light gray, and the skin color is multiplied over it (and over any layer marked `skin`,
+// such as ears). The hair image is gray too, and
 // is colored with a gradient map. The head icon is the same drawing, cropped to the head.
 export default {
   name: 'UserAvatar',
@@ -27,7 +28,7 @@ export default {
       props.head ? doll.value?.head[props.avatar.gender] || '250 60 220 220' : FULL_VIEW
     ));
     function filterOf(layer) {
-      if (layer === 'body') return `url(#${filterId})`;
+      if (isSkin(layer)) return `url(#${filterId})`;
       if (layer === 'hair' && hair.value) return `url(#${hairId})`;
       return null;
     }

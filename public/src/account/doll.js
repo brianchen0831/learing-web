@@ -16,6 +16,8 @@ export const partsFor = (gender, layer, { free = false } = {}) =>
 
 export const findPart = (id) => (doll.value ? doll.value.parts.find((p) => p.id === id) : null);
 export const isRequired = (layer) => !!doll.value?.layers.find((l) => l.id === layer)?.required;
+// Layers drawn in light gray and colored with the skin color, like the body (such as ears)
+export const isSkin = (layer) => layer === 'body' || !!doll.value?.layers.find((l) => l.id === layer)?.skin;
 
 export function defaultParts(gender) {
   const parts = {};
@@ -79,14 +81,29 @@ export function transformOf(avatar, layer) {
   return `translate(${a.x + a.cx} ${a.y + a.cy}) scale(${a.s}) translate(${-a.cx} ${-a.cy})`;
 }
 
-// Drops placements for layers whose part differs from `before` (a new part starts in place).
+// Where a newly put-on part goes: with the body, so it fits the body's current size and
+// place (the same move and resize as the body), or null when the body is where it starts.
+export function followBody(adjust) {
+  const b = adjust?.body;
+  return b && (b.x || b.y || b.s !== 1) ? { ...b } : null;
+}
+
+// Placements for an avatar whose parts may have changed since `beforeParts`: a part that is
+// still the same keeps its placement; a new part follows the body (see followBody).
 export function keepAdjust(avatar, beforeParts) {
   const adjust = {};
-  Object.entries(avatar.adjust || {}).forEach(([layer, a]) => {
-    if (layer === 'body' || (avatar.parts?.[layer] && avatar.parts[layer] === beforeParts?.[layer])) adjust[layer] = a;
+  const old = avatar.adjust || {};
+  if (old.body) adjust.body = old.body;
+  const follow = followBody(old);
+  Object.entries(avatar.parts || {}).forEach(([layer, part]) => {
+    if (!part) return;
+    if (part === beforeParts?.[layer]) {
+      if (old[layer]) adjust[layer] = old[layer];
+    } else if (follow) {
+      adjust[layer] = { ...follow };
+    }
   });
   return adjust;
 }
-
 export const skinColor =(id) => doll.value?.skins.find((s) => s.id === id)?.color || '#eec39a';
 export const partFile = (part, gender) => dollUrl(part.files[gender] || Object.values(part.files)[0]);

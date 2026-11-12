@@ -20,7 +20,7 @@ Source images are sorted into one folder per type 素材依類型分資料夾:
 | `hair-style/` | Hair styles 髮型 |
 | `eyes/` | Eyes 眼睛 |
 | `nose/` | Noses 鼻子 |
-| `ears/` | Ears 耳朵 |
+| `ears/` | Ears 耳朵, colored with the skin color |
 | `mouth/` | Mouths 嘴巴 |
 | `makeup/` | Makeup, such as blush 妝容 |
 | `upper-body/` | Tops 上身 |
@@ -148,6 +148,111 @@ sticker border, ground shadow, background scenery, realistic photo, 3D render
 | `hand-book` | a small blue book with a gold star on the cover, at the position of the viewer's right hand |
 | `back-wings` | a pair of white feathered angel wings spreading out behind the shoulders |
 | `back-cape` | a long red cape with a gold hem, hanging from the shoulders behind the body |
+
+## Princess face parts 公主風五官
+
+Five sets of eyes, nose, mouth and ears in the style of classic hand-drawn fairy-tale princess animation, for the female body only. Upload `template-female.png` as the reference for every one.
+
+五組公主風格的眼睛、鼻子、嘴巴和耳朵，只做女生身體。每一張都上傳 `template-female.png` 當參考。
+
+The prompts describe the look instead of naming the studio or any princess. Image tools often refuse or copy a character when one is named, and the site should not use a real company's characters. Each set is an original design.
+
+指令只描述畫風，不寫出公司或公主的名字：寫出名字時，繪圖工具常會拒絕或直接畫出那個角色，網站也不應使用真實公司的角色。每一組都是原創設計。
+
+### Face prompt 五官指令
+
+For eyes, noses and mouths:
+
+```
+Use the uploaded gray mannequin as an exact size and position guide.
+Draw ONLY this face part, placed on the mannequin's face: [ITEM].
+
+The part must match the mannequin's head size and sit exactly where it belongs
+on the face. Most of the image stays empty background.
+
+Style: classic hand-drawn fairy-tale princess animation, elegant and expressive,
+clean dark brown outlines, soft cel shading, gentle warm colors.
+An original design, not any existing character.
+
+Rules:
+- Front view, symmetrical, facing the viewer.
+- Do NOT draw the head outline, face shape, skin, hair, ears, neck or body.
+- No skin color around the part.
+- No text, no logos, no watermark, no paper tabs.
+- Pure flat white background. Portrait 9:16.
+```
+
+### Ears prompt 耳朵指令
+
+Ears take the skin color on the site, like the body, so they are drawn in light gray:
+
+耳朵在網站上會和身體一樣套上膚色，所以要畫成淺灰色：
+
+```
+Use the uploaded gray mannequin as an exact size and position guide.
+Draw ONLY a pair of ears at the sides of the mannequin's head: [ITEM].
+
+The ears must match the mannequin's head size and sit exactly where its ears are.
+Most of the image stays empty background.
+
+Fill the ears with flat light gray (#e6e6e6), with dark brown outlines and soft
+gray shading, exactly like the mannequin's skin. Draw a closed outline all the
+way around each ear.
+Style: classic hand-drawn fairy-tale princess animation, an original design.
+
+Rules:
+- Front view, symmetrical.
+- Do NOT draw the head, face, hair or body. No earrings or jewelry.
+- No skin color, no text, no logos, no watermark, no paper tabs.
+- Pure flat white background. Portrait 9:16.
+```
+
+Earrings belong in `accessories/`, because anything on the ears layer is colored as skin.
+
+耳環請放在 `accessories/`，因為耳朵圖層上的所有東西都會被套上膚色。
+
+### The five sets 五組
+
+| Set | Look |
+| --- | ---- |
+| `sweet` 甜美 | Round, cheerful, youngest-looking |
+| `gentle` 溫柔 | Calm and graceful |
+| `bright` 明亮 | Lively and joyful |
+| `bold` 自信 | Strong and confident |
+| `fairy` 精靈 | Magical, with pointed ears |
+
+Save each image as `<folder>/<id>-female.png`, such as `eyes/eyes-princess-sweet-female.png`.
+
+| Save as | `[ITEM]` | Price |
+| ------- | -------- | ----- |
+| `eyes/eyes-princess-sweet-female.png` | large round sky-blue eyes with big sparkling highlights, long curled upper lashes, soft rounded eyebrows, with the eyebrows | 80 |
+| `eyes/eyes-princess-gentle-female.png` | large almond-shaped hazel-brown eyes, slightly lowered lids for a calm look, long fine lashes, thin gently arched eyebrows, with the eyebrows | 80 |
+| `eyes/eyes-princess-bright-female.png` | very large emerald-green eyes wide open with star-like highlights, thick upper lashes, lifted happy eyebrows, with the eyebrows | 80 |
+| `eyes/eyes-princess-bold-female.png` | large amber-brown eyes with a winged upper lash line, a confident look, thicker straight eyebrows with a sharp arch, with the eyebrows | 80 |
+| `eyes/eyes-princess-fairy-female.png` | large violet eyes with tiny sparkles in the irises, long sweeping lashes, very thin high-arched eyebrows, with the eyebrows | 100 |
+| `nose/nose-princess-sweet-female.png` | a tiny upturned button nose, drawn with one short curved line and two dots for nostrils | 40 |
+| `nose/nose-princess-gentle-female.png` | a small slender straight nose, drawn with one soft line down one side and a small curved tip | 40 |
+| `nose/nose-princess-bright-female.png` | a small rounded nose, drawn with one short curved line under the tip | 40 |
+| `nose/nose-princess-bold-female.png` | a small well-defined nose with a short bridge line and two small nostril curves | 40 |
+| `nose/nose-princess-fairy-female.png` | a very small pointed nose, drawn with one tiny line | 40 |
+| `mouth/mouth-princess-sweet-female.png` | small rosy lips in a closed sweet smile, with a soft pink shine | 50 |
+| `mouth/mouth-princess-gentle-female.png` | soft pink lips in a calm closed smile, with the corners slightly raised | 50 |
+| `mouth/mouth-princess-bright-female.png` | an open joyful smile showing a little of the upper teeth, coral pink lips | 50 |
+| `mouth/mouth-princess-bold-female.png` | full berry-rose lips in a confident closed smile, a little wider | 50 |
+| `mouth/mouth-princess-fairy-female.png` | small heart-shaped lips in light pink, a soft playful smile | 50 |
+| `ears/ears-princess-sweet-female.png` | small round ears | 40 |
+| `ears/ears-princess-gentle-female.png` | classic oval ears, slightly narrow | 40 |
+| `ears/ears-princess-bright-female.png` | slightly larger round ears that stick out a little | 40 |
+| `ears/ears-princess-bold-female.png` | neat oval ears with a defined inner curve | 40 |
+| `ears/ears-princess-fairy-female.png` | long pointed elf ears that rise past the top of the ear line | 80 |
+
+Hand the finished images over in these folders. They are then cut out, lined up with the face on the 720 × 1272 canvas, and added to the beauty salon with the prices above (the `shop.json` in each folder). The nose and lips keep only how much darker they are than the drawn skin, so they suit every skin color.
+
+完成的圖片放在上述資料夾後，會再去背、對齊到 720 × 1272 畫布上的臉部位置，依上表價格加進美容院（各資料夾的 `shop.json`）。鼻子和嘴唇只保留比膚色深的部分，所以任何膚色都合適。
+
+The body image already has ears, so the new ears are drawn over them. Where a new ear is smaller than the body's ear, the body's ear still shows around it, so smaller ears may need the body's ears trimmed. Pointed ears cover them fully.
+
+身體圖本身已經有耳朵，新的耳朵會畫在上面。新耳朵若比原本的小，原本的耳朵會從旁邊露出來，可能需要修掉身體圖上的耳朵。尖耳朵則能完全蓋住。
 
 ## Background prompt 背景指令
 

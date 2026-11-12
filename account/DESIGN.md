@@ -27,7 +27,7 @@ All account code is in two folders:
 | `/account/arrange` | Arrange the avatar: move and resize each part. Needs a login. |
 | `/account/shop` | Dressing room 試衣間: clothes, shoes and accessories. Needs a login. |
 | `/account/hair` | Hair salon 髮廊: hair styles. Needs a login. |
-| `/account/beauty` | Beauty salon 美容院: eyes, nose, mouth and makeup. Needs a login. |
+| `/account/beauty` | Beauty salon 美容院: eyes, nose, mouth, ears and makeup. Needs a login. |
 
 The top right shows **Log in**, or the head icon, name and **Log out**. On wide screens, the home page sidebar shows the full-body avatar with the name, coins and a link to the dressing room, or a login hint when logged out. Names are 1–30 characters and do not depend on capital letters: `Amy` and `amy` are the same account. Passwords are 6–128 characters.
 
@@ -89,14 +89,14 @@ Everything about the doll is in `public/assets/avatars/doll/parts.json`, read by
 | --- | ------- |
 | `genders` | `male` and `female`. Each has its own body and its own parts. |
 | `skins` | Skin colors, lightest to darkest (11). The one marked `default` is used when none is chosen. |
-| `layers` | Layer order, back to front. `required` layers can be swapped but never removed. `shop` says which shop sells the layer: `clothes`, `hair` or `beauty`. |
+| `layers` | Layer order, back to front. `required` layers can be swapped but never removed. `shop` says which shop sells the layer: `clothes`, `hair` or `beauty`. `skin` layers are colored with the skin color, like the body. |
 | `hairColors` | Free hair colors: black, brunette, red, blonde, grey. Each has four `stops`, from outline to highlight. |
 | `head` | The head-icon crop for each gender. |
 | `parts` | Every part: `id`, `layer`, `label`, `files` (one per gender it fits), and `default` or `view`. Prices are not here; see **Shop lists** below. |
 
-Layer order 圖層順序: background, back, body, socks, shoes, lower, upper, makeup, eyes, nose, mouth, hair, accessory, foreground, pet.
+Layer order 圖層順序: background, back, body, ears, socks, shoes, lower, upper, makeup, eyes, nose, mouth, hair, accessory, foreground, pet.
 
-- **Skin color:** the body image is light gray, and the skin color is multiplied over it.
+- **Skin color:** the body image is light gray, and the skin color is multiplied over it. The same is done for every layer marked `"skin": true` (only `ears` so far), so ears are drawn in light gray too and anything on them is colored as skin. Earrings belong on the accessory layer. The ears layer is optional: with nothing on it, the ears drawn in the body image show. New ears are drawn over those, so an ear smaller than the body's leaves the body's ear showing around it.
 - **Hair color:** every hair image is gray, stretched so its outline is black and its highlights white. The site colors it with a gradient map (SVG `feComponentTransfer`) through the chosen color's `stops`, so every style comes in every color. The avatar saves it as `hair_color`; an avatar without one uses the first color. The server refuses a color that is not in the catalog.
 - **Required layers:** upper, lower, eyes, nose, mouth and hair. Upper and lower can never be empty, because the body's underwear would be colored as skin.
 - **Defaults:** simple eyes, nose and mouth, very short black hair, a white vest and white shorts, and bare feet. These are the parts marked `default`.
@@ -113,6 +113,9 @@ Prices live in one list per part folder in `account/avatar-art/`, next to that k
 | `lower-body/shop.json` | skirts, trousers |
 | `socks/shop.json` | socks |
 | `shoes/shop.json` | shoes |
+| `eyes/shop.json` | eyes |
+| `nose/shop.json` | noses |
+| `mouth/shop.json` | mouths |
 
 Any other folder there can have a `shop.json` too (such as `eyes/`, `makeup/`, `accessories/`, `pets/`); the server reads the `shop.json` in every folder. The format:
 
@@ -142,25 +145,29 @@ An avatar is saved as:
 ### Pages 頁面
 
 - **Register and customize** (`AvatarPicker.js`): boy or girl, skin color, and any layer with more than one free or owned part. Changing gender starts again from that body's defaults.
-- **Arrange** (`ArrangeView.js`, `/account/arrange`, linked from My account and the customizer): the avatar on a canvas. Clicking the drawing picks the top-most part under the pointer (it reads each image's transparency, so empty areas do not count), or a part can be picked from the **Layers** list. Drag to move; drag the round handle, use the **Size** slider (25–400%) or scroll to resize; arrow keys move and + / − resize. **Put this part back** and **Put all back** undo placements (**Put all back** also restores the layer order).
+- **Arrange** (`ArrangeView.js`, `/account/arrange`, linked from My account, the customizer, the site sidebar and the shops): opens in a **new browser tab** as a full-window workspace (the route has `meta.bare`, so the header, site sidebar and footer are left out): the canvas fills the window and the panel on the right holds the layers and buttons. A layer is picked **only in the Layers list on the right**; clicking the drawing never picks a layer, so editing cannot grab another one by mistake. Clicking the picked layer again unpicks it. Layers can be dragged up or down in the list (by the ⠿ grip or anywhere on the row) to change the layer order; a line shows where it will land. The picked layer's box is a thin dashed line with a small round handle, so it hides little of the drawing. With a layer picked, dragging anywhere on the canvas moves it. With nothing picked, or with Shift or the middle button, a drag pans the view when zoomed in.
+
+  The tab is opened by `openArranger` in `draft.js` (`?tab=1`). A try-on look from a shop is handed to it in localStorage under a one-time `token`. When finished, the tab tells the page that opened it through a BroadcastChannel and closes itself: **Save** sends `{ type: 'saved' }`, and every open tab reloads the user, so the account page, header icon and shops show the new placements; **Done** (a try-on) sends `{ type: 'draft', back, avatar }`, and that shop takes the arranged look; **Close without saving** just closes. If the browser blocks the new tab, the page opens in the same tab and goes back afterwards, as before. ArrangeLink.js is the link that opens it.
+
+  Drag to move. To resize, drag any of the four corners (each has a small round handle) or any of the four edges of the dashed frame: the opposite corner or edge stays put and the layer keeps its shape, and the pointer shows a resize cursor there. The **Size** slider (25–400%) and scrolling resize around the layer's middle; arrow keys move and + / − resize. **Put this part back** and **Put all back** undo placements (**Put all back** also restores the layer order).
 
   **Body:** it can be moved and resized like a part. With **Clothes and face move with the body** on (the default), every other part moves and resizes with it, so the avatar stays together; off, only the body changes. Putting the body back with that option on puts every part back.
 
-  **Work area:** the canvas is larger than the avatar's frame (`STAGE_VIEW`), so parts moved beyond it can still be seen and picked up. A dashed outline shows the frame that the avatar is shown in elsewhere; anything outside it is cut off there. The **− / % / +** buttons in the corner zoom the view (100%, 150%, 200%, 300%, 400%), centred on the selected part; the % button goes back to 100%. When zoomed in, dragging an empty spot pans the view and keeps the selection. Zoom only changes the view, not the avatar.
+  **Work area:** the canvas is larger than the avatar's frame (`STAGE_VIEW`), so parts moved beyond it can still be seen and picked up. A dashed outline shows the frame that the avatar is shown in elsewhere; anything outside it is cut off there. The **− / % / +** buttons in the corner zoom the view (100%, 150%, 200%, 300%, 400%), centred on the selected part; the % button goes back to 100%. **Center 置中** moves the whole doll back to its default place in the middle: every layer moves by the same amount, so the body is back where it starts and the parts stay where they are on it; sizes and layer order are kept, and the view goes back to 100%. When zoomed in, scroll bars appear along the bottom and right of the canvas: drag a thumb, or click the track to jump there. The mouse wheel also scrolls the view when no layer is picked (Shift + wheel sideways); with a layer picked it resizes the layer. Shift + drag (or a drag with nothing picked) pans too. Zoom only changes the view, not the avatar.
 
   **Layer order:** the **Layers** list runs from front (top) to back, the body included. **Move up a layer** / **Move down a layer** (or Page Up / Page Down) move the selected layer past the next drawn one, so a part can go in front of or behind any other, even behind the body (such as long hair behind the shoulders). The order is saved as `"order": [<layer ids, back to front>]`, only when it differs from the catalog's. The server accepts known layers, each once. Layers missing from a saved order (such as ones added to the catalog later) are drawn after the layer before them in the catalog (`orderOf` in `doll.js`). From a shop:
 
-  - **Arrange** (in the shop, before buying) opens this page with the look being tried on (`?draft=1&back=`, the look handed over in memory by `draft.js`). Nothing is saved here: **Done** takes the look, with its placements, back to the shop, where items can be bought and the look saved. **Cancel** goes back unchanged.
-  - **Buying** puts the item on and saves the look. If the item was already arranged, its placement is kept and the shop stays open. Otherwise this page opens with the item picked (`?layer=&back=&bought=`), and **Save** and **Cancel** return to the shop.
+  - **Arrange** (in the shop, before buying) opens the workspace tab with the look being tried on. Nothing is saved there: **Done** sends the look, with its placements, back to the shop, where items can be bought and the look saved.
+  - **Buying** puts the item on and saves the look. If the item was already arranged, its placement is kept. Otherwise the workspace tab opens with the item picked (`?layer=&back=&bought=`); the shop stays open behind it and updates when the tab saves.
 
-  A placement is saved in the avatar as `"adjust": { "<layer>": { "x", "y", "s", "cx", "cy" } }`: moved by (x, y) canvas pixels and resized by s around (cx, cy), the middle of the part's drawing. It shows everywhere the avatar is drawn, the head icon too. It belongs to the part: swapping in another part on that layer (in a shop or the customizer) puts the layer back in place. The server accepts placements only for worn layers and the body, with x within ±720, y within ±1272, s 0.25–4 and (cx, cy) on the canvas (`clean_adjust` in `store.py`).
+  A placement is saved in the avatar as `"adjust": { "<layer>": { "x", "y", "s", "cx", "cy" } }`: moved by (x, y) canvas pixels and resized by s around (cx, cy), the middle of the part's drawing. It shows everywhere the avatar is drawn, the head icon too. It belongs to the part: swapping in another part on that layer (in a shop or the customizer) does not carry the old part's placement over. Instead, the new part **follows the body**: it gets the same move and resize as the body (`followBody` in `doll.js`), so it fits the doll at its current size and place. When the body is where it starts, the new part is simply in its default place. Buying an item that only follows the body still opens the arrange tab afterwards; buying one the student arranged keeps that placement. The server accepts placements only for worn layers and the body (`BUILT_IN` in `store.py`; a placement or order for the `head` layer, which existed briefly, is dropped from old saves), with x within ±720, y within ±1272, s 0.25–4 and (cx, cy) on the canvas (`clean_adjust` in `store.py`).
 - **Shops** (`ShopView.js`, one page for all three): each shop sells the layers whose `shop` names it.
 
   | Shop | URL | Layers | Photo |
   | ---- | --- | ------ | ----- |
   | Dressing room 試衣間 | `/account/shop` | background, back, socks, shoes, lower, upper, accessory, foreground, pet | `public/assets/images/shops/clothes.jpg` |
   | Hair salon 髮廊 | `/account/hair` | hair | `public/assets/images/shops/hair.jpg` |
-  | Beauty salon 美容院 | `/account/beauty` | makeup, eyes, nose, mouth | `public/assets/images/shops/beauty.jpg` |
+  | Beauty salon 美容院 | `/account/beauty` | ears, makeup, eyes, nose, mouth | `public/assets/images/shops/beauty.jpg` |
 
   The hair salon also has free **Hair color** swatches above the styles; the style thumbnails show the chosen color, and **Back to default** also puts back black. A shop has a photo banner, links to the other two shops, and one tab per layer that has something for sale for the user's body. Trying on is free, and try-ons carry over when moving to another shop until the page is left. Taking a part off a required layer puts back the default. **Take off all** (dressing room) or **Back to default** (salons) puts back the defaults for that shop's layers only. The photos are free Pexels photos, shown at 80% saturation like the other site photos.
 
@@ -192,9 +199,43 @@ Do not delete a part once people own it. A worn part missing from the catalog ma
 
 The defaults were cut from the generated images in `account/avatar-art/`. The paper tabs were removed from the template bodies. The female vest was fitted from a differently sized image. The white shorts are cut from the green trousers in the vest images.
 
+The female body now comes from `template-female2` (a JPEG without an extension), a shaded version of `template-female.png` drawn on the same outline, so it looks more three-dimensional (neck, collarbones, arms, knees). Its shading is kept as gray, with the skin as bright as before, so every skin color still works; only its darkest strokes were darkened, so the outline stays crisp. Its legs are a little wider and its feet about 14 px lower than the first body's; the clothes made for the first body still fit. The first body is kept as `avatar-art/body/previous/body-female-v1.png`. The male body is unchanged.
+
 The female eyes, nose, mouth and hair come from `hair-style/hair-simpe-female-01.jpg`, and the brown pixie cut from `hair-simple-female-02.jpg`. Their heads are smaller than the template's, so the head was placed on its own: the ears were lined up and the image scaled to 110%. The nose and lips keep only how much darker they are than the drawn skin, so they suit every skin color.
 
 Known flaws: faint brown pocket stitching on the shorts, a tiny skin-colored mark at the female body's left waist, and a faint light line under the female brows on the darkest skin.
+
+### Female eyes 女生眼睛
+
+Five eyes are sold in the beauty salon, for girls only, cut from the drawings in `eyes/`:
+
+| Part | Source | Price |
+| ---- | ------ | ----- |
+| `eyes-blue` 藍色眼睛 | `eyes-simple-02.jpg` | 50 |
+| `eyes-green` 綠色眼睛 | `eyes-simple-03.jpg` | 50 |
+| `eyes-amber` 琥珀色眼睛 | `eyes-simple-04.jpg` (drawn on the girl template) | 50 |
+| `eyes-violet` 紫色眼睛 | `eyes-simple-05` (a JPEG without an extension) | 50 |
+| `eyes-princess` 公主眼睛 | `female-princess-01.webp` | 60 |
+
+Each drawing was scaled so its two irises land on the doll's own iris points, (329, 196) and (394, 196); only the eyes and brows are kept. The irises and eye whites keep their drawn colors. Brows, lashes and lines are redrawn in the dark outline brown, as strong as they were darker than the drawn skin, so they stay dark on every skin color instead of showing as pale strokes on dark skin. For `eyes-simple-04.jpg`, the template's own face and ear lines are left out. The eyes are drawn for the girl's face, so boys do not get them.
+
+### Noses 鼻子
+
+Five noses are sold in the beauty salon for 40 coins each, for boys and girls, cut from the drawings in `nose/`:
+
+| Part | Source |
+| ---- | ------ |
+| `nose-round` 圓潤鼻子 | `nose-simple-03.jpg` |
+| `nose-straight` 挺直鼻子 | `nose-simple-04.jpg` |
+| `nose-rosy` 粉嫩鼻子 | `nose-simple-05.jpg` |
+| `nose-button` 鈕扣鼻子 | `nose-simple-06.jpg` (a big chibi head) |
+| `nose-tiny` 小巧鼻子 | `nose-simple-07.jpg` (a big chibi head) |
+
+Each nose was found as the marks darker than the skin in the middle of the drawn face, scaled by the drawn head's height (top to chin) against the doll's, and placed with its tip on the tip of the doll's default nose. Like the default nose, it keeps only how much darker it is than the skin: the soft shading in the nose's own hue, darkened so it shows on dark skin, and the darkest strokes in the outline brown. So every nose suits every skin color.
+
+### Mouths 嘴巴
+
+Two mouths are sold in the beauty salon for 40 coins each, for boys and girls: `mouth-princess` 公主嘴唇 from `mouth/mouth-princess-01.jpg` and `mouth-princess-smile` 公主微笑 from `mouth-princess-02.jpg` (both big chibi heads). The lips were found in the lower middle of the drawn face, below its nose (reddish or darker than the skin; the cheek blush is left out), scaled by the drawn head's height against the doll's, and centred on the doll's default mouth. They keep only how much darker they are than the skin, tinted in the lips' own rose hue, with the darkest lines in the outline brown, so they suit every skin color.
 
 ### Female hair styles 女生髮型
 
@@ -212,7 +253,7 @@ Seven styles come from the hair-only drawings in `hair-style/`:
 
 The drawings share one head position. They were not drawn on `template-female.png` (their head is about 2.4 times bigger, with a longer, narrower face), but they keep their own shape: each is scaled evenly to 55%, with no warping, and placed with the top of the hair at the top of the doll's head. Users can move and resize it on the arrange page. The face and chin outlines in some drawings are removed. The older styles (very short, wavy, pixie) were turned gray the same way, so they keep their ids but lost the color in their names.
 
-`hair-curls-short` was then fitted to the neck and shoulders. The first version left see-through gaps between the hair and the jaw and neck, and its dark back-hair strands ended in a hard line on top of the shoulders. Now the gaps are filled with back hair in the same gray tone, and the back strands are cut away wherever the body is, so they seem to pass behind the neck and shoulders. The front locks still lie over the shoulders. The cut follows the body in its default place, so moving only the hair on the arrange page can show the cut edge. The first version is kept as `avatar-art/hair-style/previous/hair-curls-short-v1.png`, with a before-and-after picture beside it.
+All seven were then fitted to the neck and shoulders. The first versions were too big for the head, left see-through gaps between the hair and the jaw and neck, and their dark back-hair strands ended in a hard line above the shoulders. Each was shrunk to 79% around the doll's center line, with the top of the hair at canvas y 84. The gaps left under the back strands are filled with back hair that continues each strand's own gray tone, a little darker lower down. The back strands are cut away wherever the body is, so they seem to pass behind the neck. The cut follows the body in its default place, so moving only the hair on the arrange page can show the cut edge. The first versions are in git history, in commit `d320eb3` (`git show d320eb3:public/assets/avatars/doll/female/<id>.png`).
 
 ### Female school uniform 女生制服
 
@@ -222,6 +263,10 @@ The navy blazer with shirt and ribbon (upper, 80 coins), navy pleated skirt (low
 - **Socks:** warping left smudges and gaps, so the socks are drawn straight onto the doll's legs in the image's sock colors: white cloth from below the knee over the feet, a soft shadow on the inner side, and a gray outline. They look complete without shoes. The shoes are enlarged slightly so they cover the feet.
 
 Known flaws: with the blazer over the white shorts, a thin strip of skin shows in the blazer's opening under the shirt, and a sliver of arm can show under the left armpit.
+### Princess face parts 公主風五官
+
+Five sets of female eyes, noses, mouths and ears in a classic fairy-tale princess style are planned. The prompts, file names and prices are in [avatar-art/PROMPTS.md](avatar-art/PROMPTS.md#princess-face-parts-公主風五官). The images are not made yet, so the beauty salon shows no ears tab until the first ears are added.
+
 ## Tasks and rewards 任務與獎勵
 
 Users earn rewards by completing tasks. Each top-level topic page links to its own **Tasks** page at `/topics/<topic>/tasks` (`public/src/views/TopicTasksView.js`), listing the tasks whose condition uses that topic or a subtopic: open tasks first with progress, completed tasks after them in gray. Both task pages draw the list with `public/src/account/TaskList.js`. Main code: `account/rewards.py` (task format, conditions, result checks), `AccountStore.record_run` and `task_list` in `account/store.py`, and `public/src/account/TasksView.js` for the **Tasks and rewards** page at `/account/tasks`.

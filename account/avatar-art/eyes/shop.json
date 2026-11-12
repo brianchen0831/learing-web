@@ -1,0 +1,9 @@
+{
+  "items": [
+    { "id": "eyes-blue",       "price": 100 },
+    { "id": "eyes-green",      "price": 100 },
+    { "id": "eyes-amber",      "price": 100 },
+    { "id": "eyes-violet",     "price": 100 },
+    { "id": "eyes-princess",   "price": 120 }
+  ]
+}

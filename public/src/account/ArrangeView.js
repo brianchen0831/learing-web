@@ -3,7 +3,7 @@ import { useRoute, useRouter } from 'vue-router';
 import UserAvatar, { FULL_VIEW } from './UserAvatar.js';
 import { saveAvatar, user } from './auth.js';
 import { doll, dollReady, findPart, layersOf, orderOf } from './doll.js';
-import { shopDraft } from './draft.js';
+import { arrangeChannel, shopDraft, takeHandedLook } from './draft.js';
 import { pick, t } from '../i18n.js';
 
 // Arrange page: move and resize each layer of the avatar on a canvas. Click a part to pick
@@ -69,10 +69,18 @@ export default {
     // back to the shop, where it can be bought.
     const SHOP_PATHS = ['/account/shop', '/account/hair', '/account/beauty'];
     const backTo = SHOP_PATHS.includes(route.query.back) ? route.query.back : '/account';
-    const handed = route.query.draft && shopDraft.value?.back === backTo ? shopDraft.value.avatar : null;
+    // In its own tab (?tab=1), opened by openArranger: finishing closes the tab and tells the
+    // page that opened it. Otherwise (the tab was blocked) it goes back in this tab.
+    const inTab = route.query.tab === '1';
+    const tabLook = inTab ? takeHandedLook(route.query.token) : null;
+    const handed = tabLook && tabLook.back === backTo ? tabLook.avatar
+      : (route.query.draft && shopDraft.value?.back === backTo ? shopDraft.value.avatar : null);
     const tryOn = !!handed;
     const draft = reactive(JSON.parse(JSON.stringify(handed || user.value.avatar)));
     if (!draft.adjust) draft.adjust = {};
+    // A head layer once existed; its placement and order are no longer used
+    delete draft.adjust.head;
+    if (Array.isArray(draft.order)) draft.order = draft.order.filter((id) => id !== 'head');
     const info = reactive({}); // layer -> { alpha, box }
     const bought = computed(() => (typeof route.query.bought === 'string' ? findPart(route.query.bought) : null));
     const selected = ref(typeof route.query.layer === 'string' && draft.parts[route.query.layer] ? route.query.layer : '');
@@ -119,6 +127,42 @@ export default {
     }
     const zoomIn = () => setZoom(ZOOMS.find((z) => z > zoom.value) || zoom.value);
     const zoomOut = () => setZoom([...ZOOMS].reverse().find((z) => z < zoom.value) || zoom.value);
+
+    // Scroll bars along the bottom and right of the canvas, shown when zoomed in: the thumb is
+    // the part of the work area in view. Drag a thumb, or click the track to jump there.
+    const bars = computed(() => {
+      const w = STAGE[2] / zoom.value;
+      const h = STAGE[3] / zoom.value;
+      return {
+        x: { size: 100 / zoom.value, at: ((look.x - w / 2 - STAGE[0]) / STAGE[2]) * 100 },
+        y: { size: 100 / zoom.value, at: ((look.y - h / 2 - STAGE[1]) / STAGE[3]) * 100 },
+      };
+    });
+    let barDrag = null;
+    function barDown(e, axis) {
+      const track = e.currentTarget.getBoundingClientRect();
+      const length = axis === 'x' ? track.width : track.height;
+      const pos = axis === 'x' ? e.clientX - track.left : e.clientY - track.top;
+      const span = axis === 'x' ? STAGE[2] : STAGE[3];
+      const bar = bars.value[axis];
+      const onThumb = pos >= (bar.at / 100) * length && pos <= ((bar.at + bar.size) / 100) * length;
+      // Clicking the track (not the thumb) centres the view there first
+      if (!onThumb) {
+        look[axis] = (axis === 'x' ? STAGE[0] : STAGE[1]) + (pos / length) * span;
+        keepInside();
+      }
+      barDrag = { axis, start: axis === 'x' ? e.clientX : e.clientY, look: look[axis], unitsPerPx: span / length };
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+    function barMove(e) {
+      if (!barDrag) return;
+      const now = barDrag.axis === 'x' ? e.clientX : e.clientY;
+      look[barDrag.axis] = barDrag.look + (now - barDrag.start) * barDrag.unitsPerPx;
+      keepInside();
+    }
+    function barUp() {
+      barDrag = null;
+    }
     const label = (layer) => {
       if (layer === 'body') return t('arrange.body');
       const part = findPart(draft.parts[layer]);
@@ -165,6 +209,7 @@ export default {
       const a = place(layer);
       return [a.cx + a.x, a.cy + a.y];
     };
+    // The body takes every layer along (unless switched off)
     const group = (layer) => (layer === 'body' && follow.value ? drawn.value.map((l) => l.layer) : [layer]);
     function snapshot(layer) {
       const out = {};
@@ -184,18 +229,6 @@ export default {
     const moveBy = (start, dx, dy) => apply(start, { x: dx, y: dy, s: 1, cx: 0, cy: 0 });
     const scaleBy = (start, k, c) => apply(start, { x: 0, y: 0, s: k, cx: c[0], cy: c[1] });
 
-    // The top-most part drawn under a canvas point; the body last
-    function hit(x, y) {
-      for (const l of [...drawn.value].reverse()) {
-        const m = info[l.layer];
-        if (!m) continue;
-        const [lx, ly] = toLayer(place(l.layer), x, y);
-        const ix = Math.floor(lx);
-        const iy = Math.floor(ly);
-        if (ix >= 0 && iy >= 0 && ix < W && iy < H && m.alpha[iy * W + ix] > 40) return l.layer;
-      }
-      return '';
-    }
     function point(e) {
       const svg = stage.value;
       const p = svg.createSVGPoint();
@@ -205,29 +238,74 @@ export default {
       return [q.x, q.y];
     }
 
+    // Only the layer picked in the list on the right is edited, so a click on the drawing can
+    // never pick up another layer: dragging anywhere moves the picked layer, and the round
+    // handle resizes it. With nothing picked, or with Shift or the middle button, a drag pans
+    // the view when zoomed in.
+    // Resizing: the four corners and the four edges of the picked layer's dashed frame. The
+    // opposite corner (or edge) stays put, and the layer keeps its shape. zone says which
+    // part of the frame is under a canvas point: 'nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'.
+    const unitsPerPixel = () => {
+      const r = stage.value?.getBoundingClientRect();
+      return r && r.width ? Math.max(view.value[2] / r.width, view.value[3] / r.height) : 1;
+    };
+    function zone(x, y) {
+      const f = frame.value;
+      if (!f || !selected.value) return '';
+      const tol = 10 * unitsPerPixel();
+      const x1 = f.x + f.w;
+      const y1 = f.y + f.h;
+      const nearX = Math.abs(x - f.x) < tol ? 'w' : Math.abs(x - x1) < tol ? 'e' : '';
+      const nearY = Math.abs(y - f.y) < tol ? 'n' : Math.abs(y - y1) < tol ? 's' : '';
+      const insideX = x > f.x - tol && x < x1 + tol;
+      const insideY = y > f.y - tol && y < y1 + tol;
+      if (nearX && nearY) return nearY + nearX;
+      if (nearX && insideY) return nearX;
+      if (nearY && insideX) return nearY;
+      return '';
+    }
+    // The fixed point for a zone, and how far the pointer is from it along the zone's axes
+    function pivotOf(z) {
+      const f = frame.value;
+      const px = z.includes('w') ? f.x + f.w : z.includes('e') ? f.x : f.x + f.w / 2;
+      const py = z.includes('n') ? f.y + f.h : z.includes('s') ? f.y : f.y + f.h / 2;
+      return [px, py];
+    }
+    const reach = (z, p, x, y) => {
+      const dx = z.includes('w') || z.includes('e') ? x - p[0] : 0;
+      const dy = z.includes('n') || z.includes('s') ? y - p[1] : 0;
+      return Math.max(Math.hypot(dx, dy), 1);
+    };
+    const CURSORS = { n: 'ns-resize', s: 'ns-resize', e: 'ew-resize', w: 'ew-resize', ne: 'nesw-resize', sw: 'nesw-resize', nw: 'nwse-resize', se: 'nwse-resize' };
+    const cursor = ref('');
+    function hover(e) {
+      if (action) return;
+      const [x, y] = point(e);
+      cursor.value = CURSORS[zone(x, y)] || '';
+    }
+
     function down(e) {
       const [x, y] = point(e);
-      const f = frame.value;
-      if (f && Math.hypot(x - f.hx, y - f.hy) < 26 / zoom.value) {
-        const c = center(selected.value);
-        action = { mode: 'size', start: snapshot(selected.value), c, d0: Math.max(Math.hypot(x - c[0], y - c[1]), 1) };
+      const panning = !selected.value || e.shiftKey || e.button === 1;
+      const z = panning ? '' : zone(x, y);
+      if (z) {
+        const c = pivotOf(z);
+        action = { mode: 'size', zone: z, start: snapshot(selected.value), c, d0: reach(z, c, x, y) };
+      } else if (!panning) {
+        action = { mode: 'move', start: snapshot(selected.value), x0: x, y0: y };
       } else {
-        const layer = hit(x, y);
-        // An empty spot deselects; when zoomed in it pans instead and keeps the selection
-        if (layer || zoom.value === 1) selected.value = layer;
-        if (!layer) {
-          if (zoom.value === 1) return;
-          const r = stage.value.getBoundingClientRect();
-          action = { mode: 'pan', cx: e.clientX, cy: e.clientY, lx: look.x, ly: look.y, upp: Math.max(view.value[2] / r.width, view.value[3] / r.height) };
-        } else {
-          action = { mode: 'move', start: snapshot(layer), x0: x, y0: y };
-        }
+        if (zoom.value === 1) return;
+        const r = stage.value.getBoundingClientRect();
+        action = { mode: 'pan', cx: e.clientX, cy: e.clientY, lx: look.x, ly: look.y, upp: Math.max(view.value[2] / r.width, view.value[3] / r.height) };
       }
       e.currentTarget.setPointerCapture(e.pointerId);
       stage.value.focus();
     }
     function move(e) {
-      if (!action) return;
+      if (!action) {
+        hover(e);
+        return;
+      }
       if (action.mode === 'pan') {
         look.x = action.lx - (e.clientX - action.cx) * action.upp;
         look.y = action.ly - (e.clientY - action.cy) * action.upp;
@@ -236,7 +314,7 @@ export default {
       }
       const [x, y] = point(e);
       if (action.mode === 'move') moveBy(action.start, x - action.x0, y - action.y0);
-      else scaleBy(action.start, Math.hypot(x - action.c[0], y - action.c[1]) / action.d0, action.c);
+      else scaleBy(action.start, reach(action.zone, action.c, x, y) / action.d0, action.c);
     }
     function up() {
       action = null;
@@ -245,8 +323,18 @@ export default {
       if (!selected.value) return;
       scaleBy(snapshot(selected.value), factor, center(selected.value));
     }
+    // With a layer picked, the wheel resizes it. With none picked and zoomed in, the wheel
+    // scrolls the view (Shift + wheel scrolls sideways).
     function wheel(e) {
-      if (selected.value) resize(e.deltaY < 0 ? 1.05 : 1 / 1.05);
+      if (selected.value) {
+        resize(e.deltaY < 0 ? 1.05 : 1 / 1.05);
+      } else if (zoom.value > 1) {
+        const step = e.deltaY * unitsPerPixel();
+        if (e.shiftKey) look.x += step;
+        else look.y += step;
+        look.x += e.deltaX * unitsPerPixel();
+        keepInside();
+      }
     }
     function key(e) {
       if (!selected.value) return;
@@ -288,6 +376,20 @@ export default {
       Object.keys(draft.adjust).forEach((k) => delete draft.adjust[k]);
       delete draft.order;
     }
+    // Move the whole doll back to its default place, the middle of the frame: every layer
+    // moves by the same amount, so the body is where it starts and the parts stay where they
+    // are on it. Sizes and layer order are kept. The view goes back to 100%, centred.
+    function centerDoll() {
+      const body = draft.adjust.body;
+      const dx = body ? -body.x : 0;
+      const dy = body ? -body.y : 0;
+      if (dx || dy) {
+        const start = {};
+        drawn.value.forEach((l) => { start[l.layer] = { ...place(l.layer) }; });
+        moveBy(start, dx, dy);
+      }
+      setZoom(1);
+    }
 
     // Layer order: move the selected layer in front of (dir 1) or behind (dir -1) the next
     // drawn layer. Layers with nothing worn are skipped, as moving past them changes nothing.
@@ -302,6 +404,40 @@ export default {
       const order = orderOf(draft).filter((id) => id !== selected.value);
       order.splice(order.indexOf(other) + (dir > 0 ? 1 : 0), 0, selected.value);
       draft.order = order;
+    }
+    // Clicking the picked layer again unpicks it
+    function pickLayer(layer) {
+      selected.value = selected.value === layer ? '' : layer;
+    }
+    // Drag a layer in the list to change the order. The list runs front (top) to back, so
+    // dropping above another layer puts it in front of that layer, below puts it behind.
+    const dragging = ref('');
+    const dropAt = ref(null); // { layer, above }
+    function dragStart(e, layer) {
+      dragging.value = layer;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', layer);
+    }
+    function dragOver(e, layer) {
+      if (!dragging.value || dragging.value === layer) { dropAt.value = null; return; }
+      e.preventDefault();
+      const r = e.currentTarget.getBoundingClientRect();
+      dropAt.value = { layer, above: e.clientY < r.top + r.height / 2 };
+    }
+    function drop(e) {
+      e.preventDefault();
+      const from = dragging.value;
+      const at = dropAt.value;
+      dragging.value = '';
+      dropAt.value = null;
+      if (!from || !at || at.layer === from) return;
+      const order = orderOf(draft).filter((id) => id !== from);
+      order.splice(order.indexOf(at.layer) + (at.above ? 1 : 0), 0, from);
+      draft.order = order;
+    }
+    function dragEnd() {
+      dragging.value = '';
+      dropAt.value = null;
     }
     const reordered = computed(() => {
       const catalog = doll.value ? doll.value.layers.map((l) => l.id) : [];
@@ -322,13 +458,24 @@ export default {
       if (reordered.value) draft.order = orderOf(draft);
       else delete draft.order;
       if (tryOn) {
-        shopDraft.value = { back: backTo, avatar: { ...JSON.parse(JSON.stringify(draft)), adjust }, done: true };
-        router.push(backTo);
+        const avatar = { ...JSON.parse(JSON.stringify(draft)), adjust };
+        if (inTab) {
+          arrangeChannel?.postMessage({ type: 'draft', back: backTo, avatar });
+          finishTab();
+        } else {
+          shopDraft.value = { back: backTo, avatar, done: true };
+          router.push(backTo);
+        }
         return;
       }
       try {
         await saveAvatar({ ...draft, adjust });
-        router.push(backTo);
+        if (inTab) {
+          arrangeChannel?.postMessage({ type: 'saved' });
+          finishTab();
+        } else {
+          router.push(backTo);
+        }
       } catch (e) {
         error.value = t('auth.error.' + e.message);
       }
@@ -336,30 +483,36 @@ export default {
     }
     // Leave without changes; a try-on look goes back to the shop as it came
     function cancel() {
+      if (inTab) {
+        finishTab();
+        return;
+      }
       if (tryOn) shopDraft.value = { back: backTo, avatar: handed, done: true };
       router.push(backTo);
     }
+    // Close this tab. A browser may refuse (a tab it did not open by script); then go back here.
+    const closed = ref(false);
+    function finishTab() {
+      closed.value = true;
+      window.close();
+      setTimeout(() => { if (!window.closed) router.push(backTo); }, 300);
+    }
 
     return {
-      drawn, canUp, canDown, shift, reordered,
+      drawn, canUp, canDown, shift, reordered, pickLayer, dragging, dropAt, dragStart, dragOver, drop, dragEnd,
       follow, stageBox: STAGE_VIEW.split(' ').map(Number), shown: FULL_VIEW.split(' ').map(Number),
-      zoom, zoomIn, zoomOut, setZoom, maxZoom: ZOOMS[ZOOMS.length - 1],
-      doll, draft, layers, selected, stage, frame, size, error, busy, viewBox, backTo, bought, tryOn, pick,
-      label, moved, down, move, up, wheel, key, resetLayer, resetAll, save, cancel, t,
+      zoom, zoomIn, zoomOut, setZoom, maxZoom: ZOOMS[ZOOMS.length - 1], bars, barDown, barMove, barUp,
+      doll, draft, layers, selected, stage, frame, size, error, busy, viewBox, backTo, bought, tryOn, inTab, pick,
+      cursor, label, moved, down, move, up, wheel, key, resetLayer, resetAll, centerDoll, save, cancel, t,
     };
   },
   template: `
-    <main class="arrange-page">
-      <a class="back" :href="backTo" @click.prevent="cancel">← {{ backTo === '/account' ? t('auth.account') : t('arrange.backToShop') }}</a>
-      <h1>{{ t('arrange.title') }}</h1>
-      <p v-if="bought" class="right arrange-bought" role="status">{{ t('arrange.bought').replace('{item}', pick(bought.label)) }}</p>
-      <p v-if="tryOn" class="arrange-bought" role="status">{{ t('arrange.tryOn') }}</p>
-      <p class="intro">{{ t('arrange.intro') }}</p>
+    <div class="arrange-workspace">
       <div v-if="doll" class="arrange-layout">
-        <div class="lesson arrange-stage-box">
+        <div class="arrange-stage-box">
           <div class="arrange-stage">
             <UserAvatar :avatar="draft" :view="viewBox" />
-            <svg ref="stage" class="arrange-overlay" :viewBox="viewBox" tabindex="0" role="application"
+            <svg ref="stage" class="arrange-overlay" :class="{ 'arrange-idle': !selected }" :style="cursor ? { cursor } : null" :viewBox="viewBox" tabindex="0" role="application"
                  :aria-label="t('arrange.title')"
                  @pointerdown="down" @pointermove="move" @pointerup="up" @pointercancel="up"
                  @wheel.prevent="wheel" @keydown="key">
@@ -368,22 +521,43 @@ export default {
               <text :x="shown[0] + 8 / zoom" :y="shown[1] - 10 / zoom" class="arrange-shown-label" :style="{ fontSize: 28 / zoom + 'px' }">{{ t('arrange.shown') }}</text>
               <g v-if="frame">
                 <rect :x="frame.x" :y="frame.y" :width="frame.w" :height="frame.h" class="arrange-frame"/>
-                <circle :cx="frame.hx" :cy="frame.hy" :r="14 / zoom" class="arrange-handle"/>
+                <circle v-for="(c, i) in [[frame.x, frame.y], [frame.x + frame.w, frame.y], [frame.x, frame.y + frame.h], [frame.x + frame.w, frame.y + frame.h]]" :key="i"
+                        :cx="c[0]" :cy="c[1]" :r="7 / zoom" class="arrange-handle"/>
               </g>
             </svg>
+            <template v-if="zoom > 1">
+              <div class="arrange-scroll arrange-scroll-x" :title="t('arrange.scroll')"
+                   @pointerdown="barDown($event, 'x')" @pointermove="barMove" @pointerup="barUp" @pointercancel="barUp">
+                <div class="arrange-thumb" :style="{ left: bars.x.at + '%', width: bars.x.size + '%' }"></div>
+              </div>
+              <div class="arrange-scroll arrange-scroll-y" :title="t('arrange.scroll')"
+                   @pointerdown="barDown($event, 'y')" @pointermove="barMove" @pointerup="barUp" @pointercancel="barUp">
+                <div class="arrange-thumb" :style="{ top: bars.y.at + '%', height: bars.y.size + '%' }"></div>
+              </div>
+            </template>
             <div class="arrange-zoom" role="group" :aria-label="t('arrange.zoom')">
               <button type="button" class="btn" :disabled="zoom <= 1" :title="t('arrange.zoomOut')" :aria-label="t('arrange.zoomOut')" @click="zoomOut">−</button>
               <button type="button" class="btn" :title="t('arrange.zoomReset')" @click="setZoom(1)">{{ Math.round(zoom * 100) }}%</button>
               <button type="button" class="btn" :disabled="zoom >= maxZoom" :title="t('arrange.zoomIn')" :aria-label="t('arrange.zoomIn')" @click="zoomIn">+</button>
+              <button type="button" class="btn arrange-center" :title="t('arrange.centerHint')" @click="centerDoll">⌖ {{ t('arrange.center') }}</button>
             </div>
           </div>
         </div>
-        <section class="lesson arrange-panel">
+        <section class="arrange-panel">
+          <a class="back" :href="backTo" @click.prevent="cancel">← {{ inTab ? t('arrange.close') : backTo === '/account' ? t('auth.account') : t('arrange.backToShop') }}</a>
+          <h1>{{ t('arrange.title') }}</h1>
+          <p v-if="bought" class="right arrange-bought" role="status">{{ t('arrange.bought').replace('{item}', pick(bought.label)) }}</p>
+          <p v-if="tryOn" class="arrange-bought" role="status">{{ t('arrange.tryOn') }}</p>
+          <p class="intro">{{ t('arrange.intro') }}</p>
           <h2>{{ t('arrange.layers') }}</h2>
+          <p class="arrange-hint">{{ t('arrange.dragHint') }}</p>
           <p class="arrange-hint">{{ t('arrange.front') }}</p>
           <ol class="arrange-layers" :aria-label="t('arrange.layers')">
-            <li v-for="l in [...drawn].reverse()" :key="l.layer">
-              <button type="button" class="btn" :aria-pressed="String(selected === l.layer)" @click="selected = l.layer">
+            <li v-for="l in [...drawn].reverse()" :key="l.layer" draggable="true"
+                :class="{ dragging: dragging === l.layer, 'drop-above': dropAt && dropAt.layer === l.layer && dropAt.above, 'drop-below': dropAt && dropAt.layer === l.layer && !dropAt.above }"
+                @dragstart="dragStart($event, l.layer)" @dragover="dragOver($event, l.layer)" @drop="drop" @dragend="dragEnd">
+              <button type="button" class="btn" :aria-pressed="String(selected === l.layer)" :title="t('arrange.dragHint')" @click="pickLayer(l.layer)">
+                <span class="arrange-grip" aria-hidden="true">⠿</span>
                 {{ label(l.layer) }}<span v-if="moved(l.layer)" class="arrange-dot" :title="t('arrange.moved')"> •</span>
               </button>
             </li>
@@ -413,6 +587,6 @@ export default {
           </div>
         </section>
       </div>
-    </main>
+    </div>
   `,
 };

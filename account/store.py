@@ -71,7 +71,7 @@ def clean_avatar(avatar, catalog, owned):
         raise AccountError("invalid_avatar")
     parts = catalog.default_parts(gender)
     for layer, part_id in given.items():
-        if layer not in catalog.layers or layer == "body":
+        if layer not in catalog.layers or layer in BUILT_IN:
             raise AccountError("invalid_avatar")
         if part_id is None:
             if layer in catalog.required:
@@ -104,6 +104,8 @@ def clean_order(order, catalog):
     order is dropped, so only a changed order is saved."""
     if order is None:
         return []
+    if isinstance(order, list):
+        order = [layer for layer in order if layer not in RETIRED_LAYERS]
     if (not isinstance(order, list) or len(order) > len(catalog.layers)
             or any(layer not in catalog.layers for layer in order) or len(set(order)) != len(order)):
         raise AccountError("invalid_avatar")
@@ -111,6 +113,11 @@ def clean_order(order, catalog):
         return []
     return order
 
+
+# Layers drawn for everyone, not chosen as parts: they can be moved and resized, not swapped
+BUILT_IN = ("body",)
+# Layers that no longer exist; an avatar saved with them still saves, without them
+RETIRED_LAYERS = ("head",)
 
 # Limits for moving and resizing a layer on the arrange page, in canvas pixels (720 x 1272)
 ADJUST_LIMITS = {"x": (-720, 720), "y": (-1272, 1272), "s": (0.25, 4), "cx": (0, 720), "cy": (0, 1272)}
@@ -122,11 +129,13 @@ def clean_adjust(adjust, parts):
     A placement that changes nothing is dropped."""
     if adjust is None:
         return {}
-    if not isinstance(adjust, dict) or len(adjust) > len(parts) + 1:
+    if isinstance(adjust, dict):
+        adjust = {layer: value for layer, value in adjust.items() if layer not in RETIRED_LAYERS}
+    if not isinstance(adjust, dict) or len(adjust) > len(parts) + len(BUILT_IN):
         raise AccountError("invalid_avatar")
     out = {}
     for layer, value in adjust.items():
-        if (layer not in parts and layer != "body") or not isinstance(value, dict) or set(value) != set(ADJUST_LIMITS):
+        if (layer not in parts and layer not in BUILT_IN) or not isinstance(value, dict) or set(value) != set(ADJUST_LIMITS):
             raise AccountError("invalid_avatar")
         item = {}
         for key, (low, high) in ADJUST_LIMITS.items():

@@ -1,0 +1,9 @@
+{
+  "items": [
+    { "id": "nose-round",      "price": 100 },
+    { "id": "nose-straight",   "price": 100 },
+    { "id": "nose-rosy",       "price": 100 },
+    { "id": "nose-button",     "price": 100 },
+    { "id": "nose-tiny",       "price": 100 }
+  ]
+}

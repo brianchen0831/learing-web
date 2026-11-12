@@ -20,6 +20,7 @@
     { "id": "background", "shop": "clothes", "label": { "en": "Background", "zh": "背景" } },
     { "id": "back", "shop": "clothes", "label": { "en": "Back", "zh": "背飾" } },
     { "id": "body" },
+    { "id": "ears", "shop": "beauty", "skin": true, "label": { "en": "Ears", "zh": "耳朵" } },
     { "id": "socks", "shop": "clothes", "label": { "en": "Socks", "zh": "襪子" } },
     { "id": "shoes", "shop": "clothes", "label": { "en": "Shoes", "zh": "鞋子" } },
     { "id": "lower", "shop": "clothes", "label": { "en": "Lower body", "zh": "下身" }, "required": true },
@@ -51,14 +52,74 @@
       "files": { "male": "male/eyes-simple.png", "female": "female/eyes-simple.png" }
     },
     {
+      "id": "eyes-blue", "layer": "eyes", "view": "285 140 150 90",
+      "label": { "en": "Blue eyes", "zh": "藍色眼睛" },
+      "files": { "female": "female/eyes-blue.png" }
+    },
+    {
+      "id": "eyes-green", "layer": "eyes", "view": "285 140 150 90",
+      "label": { "en": "Green eyes", "zh": "綠色眼睛" },
+      "files": { "female": "female/eyes-green.png" }
+    },
+    {
+      "id": "eyes-amber", "layer": "eyes", "view": "285 140 150 90",
+      "label": { "en": "Amber eyes", "zh": "琥珀色眼睛" },
+      "files": { "female": "female/eyes-amber.png" }
+    },
+    {
+      "id": "eyes-violet", "layer": "eyes", "view": "285 140 150 90",
+      "label": { "en": "Violet eyes", "zh": "紫色眼睛" },
+      "files": { "female": "female/eyes-violet.png" }
+    },
+    {
+      "id": "eyes-princess", "layer": "eyes", "view": "285 140 150 90",
+      "label": { "en": "Princess eyes", "zh": "公主眼睛" },
+      "files": { "female": "female/eyes-princess.png" }
+    },
+    {
       "id": "nose-simple", "layer": "nose", "default": true,
       "label": { "en": "Simple nose", "zh": "簡單鼻子" },
       "files": { "male": "male/nose-simple.png", "female": "female/nose-simple.png" }
     },
     {
+      "id": "nose-round", "layer": "nose", "view": "310 170 100 100",
+      "label": { "en": "Round nose", "zh": "圓潤鼻子" },
+      "files": { "male": "male/nose-round.png", "female": "female/nose-round.png" }
+    },
+    {
+      "id": "nose-straight", "layer": "nose", "view": "310 170 100 100",
+      "label": { "en": "Straight nose", "zh": "挺直鼻子" },
+      "files": { "male": "male/nose-straight.png", "female": "female/nose-straight.png" }
+    },
+    {
+      "id": "nose-rosy", "layer": "nose", "view": "310 170 100 100",
+      "label": { "en": "Rosy nose", "zh": "粉嫩鼻子" },
+      "files": { "male": "male/nose-rosy.png", "female": "female/nose-rosy.png" }
+    },
+    {
+      "id": "nose-button", "layer": "nose", "view": "310 170 100 100",
+      "label": { "en": "Button nose", "zh": "鈕扣鼻子" },
+      "files": { "male": "male/nose-button.png", "female": "female/nose-button.png" }
+    },
+    {
+      "id": "nose-tiny", "layer": "nose", "view": "310 170 100 100",
+      "label": { "en": "Tiny nose", "zh": "小巧鼻子" },
+      "files": { "male": "male/nose-tiny.png", "female": "female/nose-tiny.png" }
+    },
+    {
       "id": "mouth-smile", "layer": "mouth", "default": true,
       "label": { "en": "Smile", "zh": "微笑" },
       "files": { "male": "male/mouth-smile.png", "female": "female/mouth-smile.png" }
+    },
+    {
+      "id": "mouth-princess", "layer": "mouth", "view": "310 200 100 100",
+      "label": { "en": "Princess lips", "zh": "公主嘴唇" },
+      "files": { "male": "male/mouth-princess.png", "female": "female/mouth-princess.png" }
+    },
+    {
+      "id": "mouth-princess-smile", "layer": "mouth", "view": "310 200 100 100",
+      "label": { "en": "Princess smile", "zh": "公主微笑" },
+      "files": { "male": "male/mouth-princess-smile.png", "female": "female/mouth-princess-smile.png" }
     },
     {
       "id": "hair-short-black", "layer": "hair", "default": true,

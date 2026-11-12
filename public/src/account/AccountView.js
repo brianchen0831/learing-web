@@ -1,5 +1,6 @@
 import { watchEffect } from 'vue';
 import UserAvatar from './UserAvatar.js';
+import ArrangeLink from './ArrangeLink.js';
 import { SHOPS } from './ShopView.js';
 import { user } from './auth.js';
 import { t } from '../i18n.js';
@@ -7,7 +8,7 @@ import { t } from '../i18n.js';
 // The user page, with the full-body avatar and the three shops. Only reachable when logged in.
 export default {
   name: 'AccountView',
-  components: { UserAvatar },
+  components: { UserAvatar, ArrangeLink },
   setup() {
     watchEffect(() => {
       document.title = `${t('auth.account')} – ${t('site.title')}`;
@@ -25,7 +26,7 @@ export default {
           <p class="coins">{{ t('shop.coins') }}: <strong>{{ user.coins }}</strong></p>
           <div class="account-actions">
             <RouterLink class="btn" to="/account/avatar">{{ t('avatar.customize') }}</RouterLink>
-            <RouterLink class="btn" to="/account/arrange">{{ t('arrange.title') }}</RouterLink>
+            <ArrangeLink class="btn">{{ t('arrange.title') }} ↗</ArrangeLink>
             <RouterLink class="btn" to="/account/tasks">{{ t('tasks.title') }}</RouterLink>
           </div>
         </div>

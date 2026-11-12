@@ -1,9 +1,9 @@
-import { computed, onMounted, ref, watch, watchEffect } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 import UserAvatar from './UserAvatar.js';
-import { buyItem, saveAvatar, user } from './auth.js';
-import { defaultParts, doll, dollReady, findPart, hairColors, hairTables, isRequired, keepAdjust, partFile, partsFor } from './doll.js';
-import { shopDraft } from './draft.js';
+import { buyItem, refreshUser, saveAvatar, user } from './auth.js';
+import { defaultParts, doll, dollReady, findPart, hairColors, hairTables, followBody, isRequired, isSkin, keepAdjust, partFile, partsFor, skinColor } from './doll.js';
+import { arrangeChannel, openArranger, shopDraft } from './draft.js';
 import { pick, t } from '../i18n.js';
 
 // The shops: dressing room (clothes and shoes), hair salon (hair) and beauty salon (face).
@@ -81,6 +81,12 @@ export default {
     );
     const colors = computed(() => (ready.value && info.value.id === 'hair' ? hairColors() : []));
     const hairFilter = computed(() => hairTables(hairColor.value));
+    // Thumbnails of skin layers (such as ears) take the user's skin color, hair the chosen color
+    const skinFill = computed(() => skinColor(user.value.avatar.skin));
+    const thumbFilter = (p) => {
+      if (isSkin(p.layer)) return 'url(#shop-skin)';
+      return p.layer === 'hair' && hairFilter.value ? 'url(#shop-hair)' : null;
+    };
     const heroStyle = computed(() => ({ backgroundImage: `url("${info.value.image}")` }));
 
     // One part per layer. Taking a part off a required layer puts back the default.
@@ -98,19 +104,45 @@ export default {
       worn.value = next;
       forget(part.layer);
     }
-    // A layer whose part changed starts in place again; back to the saved part, back to its saved place
+    // A layer whose part changed follows the body (its current size and place), so a new item
+    // fits the doll as it is; back to the saved part, back to its saved place.
     function forget(l) {
       const saved = user.value.avatar;
       const p = { ...placed.value };
+      const follow = followBody(placed.value);
       if (worn.value[l] && worn.value[l] === saved.parts[l] && saved.adjust?.[l]) p[l] = saved.adjust[l];
+      else if (worn.value[l] && follow) p[l] = follow;
       else delete p[l];
       placed.value = p;
     }
     // Arrange what is being tried on, before buying it
     function arrange() {
-      shopDraft.value = { back: info.value.path, avatar: JSON.parse(JSON.stringify(preview.value)) };
-      router.push({ path: '/account/arrange', query: { draft: '1', back: info.value.path } });
+      openArranger(router, { back: info.value.path }, JSON.parse(JSON.stringify(preview.value)));
     }
+    // From the arrange tab: the try-on look came back (Done), or the avatar was saved there
+    function fromArranger(e) {
+      const msg = e.data || {};
+      if (msg.type === 'draft' && msg.back === info.value.path) {
+        worn.value = { ...msg.avatar.parts };
+        hairColor.value = msg.avatar.hair_color || hairColor.value;
+        placed.value = { ...(msg.avatar.adjust || {}) };
+        message.value = t('shop.arranged');
+      } else if (msg.type === 'saved') {
+        refreshUser().then(() => {
+          // Layers wearing their saved part take their saved place
+          const saved = user.value.avatar;
+          const p = { ...placed.value };
+          ['body', ...Object.keys(worn.value)].forEach((l) => {
+            if (l !== 'body' && worn.value[l] !== saved.parts[l]) return;
+            if (saved.adjust?.[l]) p[l] = saved.adjust[l];
+            else delete p[l];
+          });
+          placed.value = p;
+        });
+      }
+    }
+    arrangeChannel?.addEventListener('message', fromArranger);
+    onBeforeUnmount(() => arrangeChannel?.removeEventListener('message', fromArranger));
     // Puts back the defaults for this shop's layers only.
     function reset() {
       message.value = '';
@@ -149,7 +181,10 @@ export default {
         const saved = user.value.avatar;
         const parts = { ...saved.parts, [part.layer]: part.id };
         const adjust = keepAdjust({ parts, adjust: saved.adjust }, saved.parts);
-        const arranged = placed.value[part.layer];
+        // Arranged here by the student, not just following the body
+        const own = placed.value[part.layer];
+        const follow = followBody(placed.value);
+        const arranged = own && JSON.stringify(own) !== JSON.stringify(follow) ? own : null;
         if (arranged) adjust[part.layer] = arranged;
         await saveAvatar({ ...saved, hair_color: hairColor.value || saved.hair_color, parts, adjust });
         if (arranged) {
@@ -157,8 +192,9 @@ export default {
           busy.value = false;
           return;
         }
-        const query = { layer: part.layer, back: info.value.path, bought: part.id };
-        router.push({ path: '/account/arrange', query });
+        message.value = t('shop.boughtArrange');
+        busy.value = false;
+        openArranger(router, { layer: part.layer, back: info.value.path, bought: part.id });
       } catch (e) {
         error.value = t('auth.error.' + e.message);
         busy.value = false;
@@ -175,7 +211,7 @@ export default {
 
     return {
       user, ready, info, others, layer, tabs, items, preview, toBuy, unsaved, message, error, busy, gender, heroStyle,
-      colors, hairColor, hairFilter,
+      colors, hairColor, hairFilter, skinFill, thumbFilter,
       owns, isWorn, toggle, reset, buy, save, arrange, partFile, pick, t,
     };
   },
@@ -215,8 +251,13 @@ export default {
           </div>
         </aside>
         <section class="lesson">
-          <svg v-if="hairFilter" width="0" height="0" class="svg-defs" aria-hidden="true">
-            <filter id="shop-hair" color-interpolation-filters="sRGB">
+          <svg width="0" height="0" class="svg-defs" aria-hidden="true">
+            <filter id="shop-skin" color-interpolation-filters="sRGB">
+              <feFlood :flood-color="skinFill"/>
+              <feComposite in2="SourceAlpha" operator="in"/>
+              <feBlend in="SourceGraphic" mode="multiply"/>
+            </filter>
+            <filter v-if="hairFilter" id="shop-hair" color-interpolation-filters="sRGB">
               <feComponentTransfer>
                 <feFuncR type="table" :tableValues="hairFilter.r"/>
                 <feFuncG type="table" :tableValues="hairFilter.g"/>
@@ -241,7 +282,7 @@ export default {
             <div class="shop-grid">
               <button v-for="p in items" :key="p.id" type="button" class="shop-item" :aria-pressed="String(isWorn(p.id))" @click="toggle(p)">
                 <svg :viewBox="p.view || '0 0 720 1272'" aria-hidden="true">
-                  <image :href="partFile(p, gender)" width="720" height="1272" :filter="p.layer === 'hair' && hairFilter ? 'url(#shop-hair)' : null"/>
+                  <image :href="partFile(p, gender)" width="720" height="1272" :filter="thumbFilter(p)"/>
                 </svg>
                 <strong>{{ pick(p.label) }}</strong>
                 <span>{{ owns(p.id) ? t('shop.owned') : p.price + ' ' + t('shop.coinUnit') }}</span>

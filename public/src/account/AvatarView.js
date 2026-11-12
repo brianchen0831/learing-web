@@ -1,6 +1,7 @@
 import { reactive, ref, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 import AvatarPicker from './AvatarPicker.js';
+import ArrangeLink from './ArrangeLink.js';
 import { saveAvatar, user } from './auth.js';
 import { keepAdjust } from './doll.js';
 import { t } from '../i18n.js';
@@ -8,7 +9,7 @@ import { t } from '../i18n.js';
 // Avatar customization page. Only reachable when logged in.
 export default {
   name: 'AvatarView',
-  components: { AvatarPicker },
+  components: { AvatarPicker, ArrangeLink },
   setup() {
     const router = useRouter();
     const draft = reactive(JSON.parse(JSON.stringify(user.value.avatar)));
@@ -41,7 +42,7 @@ export default {
         <AvatarPicker :avatar="draft" />
         <p v-if="error" class="wrong" role="alert">{{ error }}</p>
         <div class="dialog-actions">
-          <RouterLink class="btn" to="/account/arrange">{{ t('arrange.title') }}</RouterLink>
+          <ArrangeLink class="btn">{{ t('arrange.title') }} ↗</ArrangeLink>
           <RouterLink class="btn" to="/account">{{ t('dialog.cancel') }}</RouterLink>
           <button type="button" class="btn btn-primary" :disabled="busy" @click="save">{{ t('avatar.save') }}</button>
         </div>

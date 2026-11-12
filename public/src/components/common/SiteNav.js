@@ -1,5 +1,6 @@
 import { onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import ArrangeLink from '../../account/ArrangeLink.js';
 import { user } from '../../account/auth.js';
 import { getContent, getTopics } from '../../api.js';
 import { pick, t } from '../../i18n.js';
@@ -11,6 +12,7 @@ import { navFolded, navOpen } from '../../layout.js';
 // opened from the header's menu button, closed when a page is chosen.
 export default {
   name: 'SiteNav',
+  components: { ArrangeLink },
   setup() {
     const route = useRoute();
     const topics = ref([]);
@@ -72,7 +74,8 @@ export default {
         <p class="sitenav-head">{{ t('nav.account') }}</p>
         <ul v-if="user">
           <li v-for="link in accountLinks" :key="link.to">
-            <RouterLink :to="link.to" :class="{ here: here(link.to) }">{{ t(link.label) }}</RouterLink>
+            <ArrangeLink v-if="link.to === '/account/arrange'">{{ t(link.label) }} ↗</ArrangeLink>
+            <RouterLink v-else :to="link.to" :class="{ here: here(link.to) }">{{ t(link.label) }}</RouterLink>
           </li>
         </ul>
         <ul v-else>
